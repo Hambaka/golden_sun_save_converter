@@ -1,11 +1,10 @@
-use std::collections::BTreeMap;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process;
 use std::string::String;
-use clap::{AppSettings, Command, arg, ArgGroup, ArgAction, value_parser};
+use clap::{AppSettings, Command, arg, ArgGroup, value_parser};
 
 /* Golden Sun/Golden Sun: The Lost Age build date
    Source: Golden Sun Hacking Community Discord Server
@@ -52,7 +51,7 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
 
 fn main() {
   let matches = Command::new("Golden Sun Save Converter")
-    .version("0.1.0")
+    .version("0.1.1")
     .author("Hambaka")
     .about("Read save data to change all party members' names to the default name in other language versions, \nand save data can be converted to aother language version by editing build date.")
     .global_setting(AppSettings::DeriveDisplayOrder)
@@ -86,13 +85,6 @@ fn main() {
         .required(true)
         .args(&["name", "build"])
         .multiple(true)
-    )
-    .arg(
-      arg!(
-        -c --corrupt "Corrupt save data (Why???)"
-      )
-        .action(ArgAction::SetTrue)
-        .required(false)
     )
     .arg(
       arg!(
@@ -193,30 +185,11 @@ fn main() {
     return;
   }
 
-  let to_corrupt = *matches.get_one::<bool>("corrupt").expect("Defaulted by clap");
-
   // Get output save data file.
   let mut raw_save_file = Vec::new();
   input_file.read_to_end(&mut raw_save_file).unwrap();
 
-  let save_data_map = convert_save(raw_save_file, game, name_type, build_date_type, to_corrupt);
-  let mut output_save;
-  if !to_corrupt {
-    output_save = Vec::from(save_data_map.get(&255).unwrap().clone());
-  } else {
-    output_save = Vec::new();
-    let save_slot_size = match game.as_str() {
-      "1" => 0x1000,
-      _ => 0x3000
-    };
-    let blank_size = file_size - (save_data_map.len() * save_slot_size) as u64;
-    for (_key, value) in save_data_map.iter() {
-      output_save.extend_from_slice(value);
-    }
-    for _i in 0..blank_size {
-      output_save.push(0);
-    }
-  }
+  let output_save = convert_save(raw_save_file, game, name_type, build_date_type);
 
   // Start to create and write output save file.
   let output_path;
@@ -256,10 +229,9 @@ fn main() {
 /* Links to other Golden Sun reference guide (save editing):
    https://gamefaqs.gamespot.com/gba/468548-golden-sun/faqs/43776
    https://gamefaqs.gamespot.com/gba/561356-golden-sun-the-lost-age/faqs/30811 */
-fn convert_save(mut raw_save_file: Vec<u8>, game: &str, name_type: usize, build_date_type: usize, to_corrupt: bool) -> BTreeMap<u8, Vec<u8>> {
+fn convert_save(mut raw_save_file: Vec<u8>, game: &str, name_type: usize, build_date_type: usize) -> Vec<u8> {
   let mut blank_save_slot_count = 0;
   let camelot_header = [0x43u8, 0x41u8, 0x4Du8, 0x45u8, 0x4Cu8, 0x4Fu8, 0x54u8];
-  let mut save_data_map = BTreeMap::new();
 
   let game_type;
   let max_loop;
@@ -411,11 +383,6 @@ fn convert_save(mut raw_save_file: Vec<u8>, game: &str, name_type: usize, build_
     let checksum_bytes = checksum.to_le_bytes();
     raw_save_file[i * save_slot_size + 0x08] = checksum_bytes[0];
     raw_save_file[i * save_slot_size + 0x09] = checksum_bytes[1];
-
-    let slot_number = raw_save_file[i * save_slot_size + 0x07];
-    if to_corrupt && slot_number < 0x03 {
-      save_data_map.insert(slot_number, Vec::from(raw_save_file.get(i * save_slot_size..(i + 1) * save_slot_size).unwrap()));
-    }
   }
 
   if blank_save_slot_count == max_loop {
@@ -423,9 +390,5 @@ fn convert_save(mut raw_save_file: Vec<u8>, game: &str, name_type: usize, build_
     process::exit(1);
   }
 
-  if !to_corrupt {
-    save_data_map.insert(255, raw_save_file);
-  }
-
-  return save_data_map;
+  return raw_save_file;
 }
