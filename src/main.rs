@@ -51,7 +51,7 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
 
 fn main() {
   let matches = Command::new("Golden Sun Save Converter")
-    .version("0.1.1")
+    .version("0.1.2")
     .author("Hambaka")
     .about("Read save data to change all party members' names to the default name in other language versions, \nand save data can be converted to aother language version by editing build date.")
     .global_setting(AppSettings::DeriveDisplayOrder)
@@ -210,17 +210,16 @@ fn main() {
       file_extension = path.extension().unwrap().to_str().unwrap();
     }
 
-    let mut output_path_str = String::new().to_owned();
-    output_path_str.push_str(parent);
-    output_path_str.push_str(file_stem);
-    output_path_str.push_str("_output");
+    let mut file_name_str = String::new().to_owned();
+    file_name_str.push_str(file_stem);
+    file_name_str.push_str("_output");
 
     if file_extension.len() != 0 {
-      output_path_str.push_str(".");
-      output_path_str.push_str(file_extension);
+      file_name_str.push_str(".");
+      file_name_str.push_str(file_extension);
     }
 
-    output_path = PathBuf::from(output_path_str);
+    output_path = PathBuf::from(parent).join(file_name_str);
   }
   output_file = File::create(output_path.clone()).expect(&*format!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
   output_file.write_all(&*output_save).expect(&*format!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
