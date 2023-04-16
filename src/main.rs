@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process;
 use std::string::String;
-use clap::{AppSettings, Command, arg, ArgGroup, value_parser};
+use clap::{Command, arg, ArgGroup, value_parser};
 
 /* Golden Sun/Golden Sun: The Lost Age build date
    Source: Golden Sun Hacking Community Discord Server
@@ -54,7 +54,6 @@ fn main() {
     .version("0.1.2")
     .author("Hambaka")
     .about("Read save data to change all party members' names to the default name in other language versions, \nand save data can be converted to aother language version by editing build date.")
-    .global_setting(AppSettings::DeriveDisplayOrder)
     .allow_negative_numbers(true)
     .arg(
       arg!(
