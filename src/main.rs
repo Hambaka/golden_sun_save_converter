@@ -143,7 +143,7 @@ fn main() {
       "1" => Some(GameType::TBS),
       "2" => Some(GameType::TLA),
       _ => {
-        eprintln!("Please input a valid game type value!");
+        eprintln!("Please input a valid game type value!\nAvailable values: 1, 2\nExample: -g 2");
         return;
       }
     }
@@ -170,7 +170,7 @@ fn main() {
       "nc" => Some(NameType::ChineseFanTranslation2023Team),
       // Invalid value
       _ => {
-        eprintln!("Please input a valid name type value!");
+        eprintln!("Please input a valid name type value!\nAvailable values: j, e, g, s, f, i, oc, nc\nExample: -n e");
         return;
       }
     }
@@ -197,7 +197,7 @@ fn main() {
       "nc" => Some(BuildDateType::Japanese),
       // Invalid value
       _ => {
-        eprintln!("Please input a valid build date type value!");
+        eprintln!("Please input a valid build date type value!\nAvailable values: j, e, g, s, f, i, oc, nc\nExample: -b e");
         return;
       }
     };
