@@ -79,7 +79,7 @@ enum BuildDateType {
 
 fn main() {
   let matches = Command::new("Golden Sun Save Converter")
-    .version("0.1.3")
+    .version("0.1.4")
     .author("Hambaka")
     .about("Read save data to change all party members' names to the default name in other language versions, \nand save data can be converted to aother language version by editing build date.")
     .allow_negative_numbers(true)
