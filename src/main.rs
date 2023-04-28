@@ -49,13 +49,13 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0x25, 0x23, 0x26, 0x23, 0x00, 0x00, 0x00], [0x27, 0x23, 0x28, 0x23, 0x29, 0x23, 0x00], [0x2A, 0x23, 0x2B, 0x23, 0x00, 0x00, 0x00], [0x2C, 0x23, 0x2D, 0x23, 0x2E, 0x23, 0x00], [0x2F, 0x23, 0x30, 0x23, 0x31, 0x23, 0x00], [0x2F, 0x23, 0x32, 0x23, 0x33, 0x23, 0x00], [0x30, 0x23, 0x34, 0x23, 0x00, 0x00, 0x00], [0x35, 0x23, 0x36, 0x23, 0x29, 0x23, 0x00]]
 ];
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum GameType {
   TBS,
   TLA,
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum NameType {
   Japanese,
   English,
@@ -204,9 +204,11 @@ fn main() {
   }
 
   if let Some(name_type) = name_type_option {
-    if (name_type == NameType::ChineseFanTranslationMobileTeam && game_type_option.unwrap() == GameType::TBS) || (name_type == NameType::ChineseFanTranslation2023Team && game_type_option.unwrap() == GameType::TLA) {
-      eprintln!("This combination is not supported!");
-      return;
+    if let Some(game_type) = game_type_option {
+      if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TBS)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TLA)) {
+        eprintln!("This combination is not supported!");
+        return;
+      }
     }
   }
 
