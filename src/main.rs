@@ -265,7 +265,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
   let party_leader;
   let party_members_count;
   let name_location;
-  let mut build_date_location = [0x36usize, 0x250usize, 0x00usize];
+  let build_date_location;
   let checksum_range;
 
   match game_type_option.unwrap() {
@@ -281,7 +281,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       // Include Garcia (Felix), Jasmine (Jenna) and Shiba. (Sheba)
       party_members_count = 7;
       name_location = 0x510;
-      build_date_location[2] = 0x508;
+      build_date_location = [0x36usize, 0x250usize, 0x508usize];
       // 0x1000 - 0x10 (header size)
       checksum_range = 0xFF0;
     }
@@ -297,7 +297,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       // We have Picard (Piers) in party now.
       party_members_count = 8;
       name_location = 0x530;
-      build_date_location[2] = 0x528;
+      build_date_location = [0x36usize, 0x250usize, 0x528usize];
       // 0x3000 - 0x10 (header size)
       checksum_range = 0x2FF0;
     }
