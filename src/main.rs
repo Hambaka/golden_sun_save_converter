@@ -51,8 +51,8 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
 
 #[derive(Clone, Copy)]
 enum GameType {
-  TBS,
-  TLA,
+  TheBrokenSeal,
+  TheLostAge,
 }
 
 #[derive(Clone, Copy)]
@@ -110,7 +110,7 @@ fn main() {
     .group(
       ArgGroup::new("content")
         .required(true)
-        .args(&["name", "build"])
+        .args(["name", "build"])
         .multiple(true)
     )
     .arg(
@@ -140,8 +140,8 @@ fn main() {
   let mut game_type_option: Option<GameType> = None;
   if let Some(game) = matches.get_one::<String>("game") {
     game_type_option = match game.as_str() {
-      "1" => Some(GameType::TBS),
-      "2" => Some(GameType::TLA),
+      "1" => Some(GameType::TheBrokenSeal),
+      "2" => Some(GameType::TheLostAge),
       _ => {
         eprintln!("Please input a valid game type value!\nAvailable values: 1, 2\nExample: -g 2");
         return;
@@ -205,7 +205,7 @@ fn main() {
 
   if let Some(name_type) = name_type_option {
     if let Some(game_type) = game_type_option {
-      if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TBS)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TLA)) {
+      if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TheBrokenSeal)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TheLostAge)) {
         eprintln!("This combination is not supported!");
         return;
       }
@@ -230,26 +230,25 @@ fn main() {
     let parent = path.parent().unwrap().to_str().unwrap();
     let file_stem = path.file_stem().unwrap().to_str().unwrap();
 
-    let file_extension;
-    if path.extension().is_none() {
-      file_extension = "";
+    let file_extension = if path.extension().is_none() {
+      ""
     } else {
-      file_extension = path.extension().unwrap().to_str().unwrap();
-    }
+      path.extension().unwrap().to_str().unwrap()
+    };
 
-    let mut file_name_str = String::new().to_owned();
+    let mut file_name_str = String::new();
     file_name_str.push_str(file_stem);
     file_name_str.push_str("_output");
 
-    if file_extension.len() != 0 {
-      file_name_str.push_str(".");
+    if !file_extension.is_empty() {
+      file_name_str.push('.');
       file_name_str.push_str(file_extension);
     }
 
     output_path = PathBuf::from(parent).join(file_name_str);
   }
-  output_file = File::create(output_path.clone()).expect(&*format!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
-  output_file.write_all(&*output_save).expect(&*format!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
+  output_file = File::create(output_path.clone()).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
+  output_file.write_all(&output_save).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
 }
 
 /* Links to other Golden Sun reference guide (save editing):
@@ -269,7 +268,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
   let checksum_range;
 
   match game_type_option.unwrap() {
-    GameType::TBS => {
+    GameType::TheBrokenSeal => {
       // 0 -> Golden Sun
       game_type_index = 0;
       // The size of each save slot is 4KB.
@@ -285,7 +284,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       // 0x1000 - 0x10 (header size)
       checksum_range = 0xFF0;
     }
-    GameType::TLA => {
+    GameType::TheLostAge => {
       // 1 -> Golden Sun: The Lost Age
       game_type_index = 1;
       // The size of each save slot is 12KB.
@@ -439,5 +438,5 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
     process::exit(1);
   }
 
-  return raw_save_file;
+  raw_save_file
 }
