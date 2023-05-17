@@ -180,9 +180,11 @@ fn main() {
   if let Some(build) = matches.get_one::<String>("build") {
     build_date_type_option = match build.as_str() {
       // j -> Japanese version
-      "j" => Some(BuildDateType::Japanese),
+      // nc -> Chinese fan translation by 2023 Team (new, GS1 only, based on Japanese version)
+      "j" | "nc" => Some(BuildDateType::Japanese),
       // e -> English version
-      "e" => Some(BuildDateType::English),
+      // oc -> Chinese fan translation by Mobile/Soma Team (old, GS2 only, based on English version)
+      "e" | "oc" => Some(BuildDateType::English),
       // g -> German version
       "g" => Some(BuildDateType::German),
       // s -> Spanish version
@@ -191,10 +193,6 @@ fn main() {
       "f" => Some(BuildDateType::French),
       // i -> Italian version
       "i" => Some(BuildDateType::Italian),
-      // oc -> Chinese fan translation by Mobile/Soma Team (old, GS2 only, based on English version)
-      "oc" => Some(BuildDateType::English),
-      // nc -> Chinese fan translation by 2023 Team (new, GS1 only, based on Japanese version)
-      "nc" => Some(BuildDateType::Japanese),
       // Invalid value
       _ => {
         eprintln!("Please input a valid build date type value!\nAvailable values: j, e, g, s, f, i, oc, nc\nExample: -b e");
@@ -426,7 +424,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
        If the checksum exceeds 4 digits(Hexadecimal, not decimal), just discard extra digits. */
     let mut checksum = 0;
     for j in 0..checksum_range {
-      checksum += raw_save_file[i * save_slot_size + 0x10 + j] as u32;
+      checksum += u32::from(raw_save_file[i * save_slot_size + 0x10 + j]);
     }
     let checksum_bytes = checksum.to_le_bytes();
     raw_save_file[i * save_slot_size + 0x08] = checksum_bytes[0];
