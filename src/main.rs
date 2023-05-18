@@ -2,43 +2,42 @@ use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::process;
 use std::string::String;
 use clap::{Command, arg, ArgGroup, value_parser};
 
-/* Golden Sun/Golden Sun: The Lost Age build date
-   Source: Golden Sun Hacking Community Discord Server
-   GS1 (J) = 0x159C
-   GS1 (U) = 0x1652
-   GS1 (G) = 0x1849
-   GS1 (S) = 0x1885
-   GS1 (F) = 0x1713
-   GS1 (I) = 0x1886
-
-   GS2 (J) = 0x198A
-   GS2 (U) = 0x1C85
-   GS2 (G) = 0x1D97
-   GS2 (S) = 0x1DC7
-   GS2 (F) = 0x1D98
-   GS2 (I) = 0x1DC8 */
+/// Golden Sun/Golden Sun: The Lost Age build date
+/// Source: Golden Sun Hacking Community Discord Server
+/// GS1 (J) = 0x159C
+/// GS1 (U) = 0x1652
+/// GS1 (G) = 0x1849
+/// GS1 (S) = 0x1885
+/// GS1 (F) = 0x1713
+/// GS1 (I) = 0x1886
+///
+/// GS2 (J) = 0x198A
+/// GS2 (U) = 0x1C85
+/// GS2 (G) = 0x1D97
+/// GS2 (S) = 0x1DC7
+/// GS2 (F) = 0x1D98
+/// GS2 (I) = 0x1DC8
 const GS_BUILD_DATE: [[[u8; 2]; 6]; 2] = [
   [[0x9C, 0x15], [0x52, 0x16], [0x49, 0x18], [0x85, 0x18], [0x13, 0x17], [0x86, 0x18]],
   [[0x8A, 0x19], [0x85, 0x1C], [0x97, 0x1D], [0xC7, 0x1D], [0x98, 0x1D], [0xC8, 0x1D]]
 ];
 
-/* Main characters' default names in different languages.
-
-   Japanese:                                   "ロビン", "ジェラルド", "イワン", "メアリィ", "ガルシア", "ジャスミン", "シバ",  "ピカード"
-   English:                                    "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Sheba", "Piers"
-   German:                                     "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Cosma", "Aaron"
-   Spanish:                                    "Hans",   "Garet",      "Iván",   "Mia",      "Félix",    "Nadia",      "Sole",  "Piers"
-   French:                                     "Vlad",   "Garet",      "Ivan",   "Sofia",    "Pavel",    "Lina",       "Cylia", "Piers"
-   Italian:                                    "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Sara",  "Piers"
-   Chinese fan translation by Mobile/Soma Team for GS2 (SC and TC share same encoding)
-   ├── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "米雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德"
-   └── Traditional Chinese:                    "羅賓",   "傑拉德",     "伊萬",   "米雅莉",   "加西亞",   "加斯敏",     "西芭",  "皮卡德"
-   Chinese fan translation by 2023 Team for GS1
-   └── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德" */
+/// Main characters' default names in different languages.
+///
+/// Japanese:                                   "ロビン", "ジェラルド", "イワン", "メアリィ", "ガルシア", "ジャスミン", "シバ",  "ピカード"
+/// English:                                    "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Sheba", "Piers"
+/// German:                                     "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Cosma", "Aaron"
+/// Spanish:                                    "Hans",   "Garet",      "Iván",   "Mia",      "Félix",    "Nadia",      "Sole",  "Piers"
+/// French:                                     "Vlad",   "Garet",      "Ivan",   "Sofia",    "Pavel",    "Lina",       "Cylia", "Piers"
+/// Italian:                                    "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Sara",  "Piers"
+/// Chinese fan translation by Mobile/Soma Team for GS2 (SC and TC share same encoding)
+/// ├── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "米雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德"
+/// └── Traditional Chinese:                    "羅賓",   "傑拉德",     "伊萬",   "米雅莉",   "加西亞",   "加斯敏",     "西芭",  "皮卡德"
+/// Chinese fan translation by 2023 Team for GS1
+/// └── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德" */
 const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0xDB, 0xCB, 0xDE, 0xDD, 0x00, 0x00, 0x00], [0xBC, 0xDE, 0xAA, 0xD7, 0xD9, 0xC4, 0xDE], [0xB2, 0xDC, 0xDD, 0x00, 0x00, 0x00, 0x00], [0xD2, 0xB1, 0xD8, 0xA8, 0x00, 0x00, 0x00], [0xB6, 0xDE, 0xD9, 0xBC, 0xB1, 0x00, 0x00], [0xBC, 0xDE, 0xAC, 0xBD, 0xD0, 0xDD, 0x00], [0xBC, 0xCA, 0xDE, 0x00, 0x00, 0x00, 0x00], [0xCB, 0xDF, 0xB6, 0xB0, 0xC4, 0xDE, 0x00]],
   [[0x49, 0x73, 0x61, 0x61, 0x63, 0x00, 0x00], [0x47, 0x61, 0x72, 0x65, 0x74, 0x00, 0x00], [0x49, 0x76, 0x61, 0x6E, 0x00, 0x00, 0x00], [0x4D, 0x69, 0x61, 0x00, 0x00, 0x00, 0x00], [0x46, 0x65, 0x6C, 0x69, 0x78, 0x00, 0x00], [0x4A, 0x65, 0x6E, 0x6E, 0x61, 0x00, 0x00], [0x53, 0x68, 0x65, 0x62, 0x61, 0x00, 0x00], [0x50, 0x69, 0x65, 0x72, 0x73, 0x00, 0x00]],
@@ -49,6 +48,31 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0x3F, 0x05, 0x81, 0x01, 0x00, 0x00, 0x00], [0x39, 0x04, 0xC1, 0x04, 0x4E, 0x02, 0x00], [0xDC, 0x08, 0xCF, 0x07, 0x00, 0x00, 0x00], [0x7A, 0x05, 0xA4, 0x08, 0xE7, 0x04, 0x00], [0xFC, 0x03, 0x14, 0x08, 0xA6, 0x08, 0x00], [0xFC, 0x03, 0x37, 0x07, 0x8B, 0x05, 0x00], [0x14, 0x08, 0x24, 0x01, 0x00, 0x00, 0x00], [0x07, 0x06, 0x8A, 0x04, 0x4E, 0x02, 0x00]],
   [[0x25, 0x23, 0x26, 0x23, 0x00, 0x00, 0x00], [0x27, 0x23, 0x28, 0x23, 0x29, 0x23, 0x00], [0x2A, 0x23, 0x2B, 0x23, 0x00, 0x00, 0x00], [0x2C, 0x23, 0x2D, 0x23, 0x2E, 0x23, 0x00], [0x2F, 0x23, 0x30, 0x23, 0x31, 0x23, 0x00], [0x2F, 0x23, 0x32, 0x23, 0x33, 0x23, 0x00], [0x30, 0x23, 0x34, 0x23, 0x00, 0x00, 0x00], [0x35, 0x23, 0x36, 0x23, 0x29, 0x23, 0x00]]
 ];
+
+/// For TBS, the size of each save slot is 4KB.
+/// For TLA, the size of each save slot is 12KB.
+const SAVE_SLOT_SIZE: [usize; 2] = [0x1000, 0x3000];
+
+/// TBS: 64KB / 4KB = 16
+/// TLA: 64KB / 12KB = 5
+const MAX_LOOP: [usize; 2] = [16, 5];
+
+/// In TBS, it should be 0 -> Robin (Isaac)
+/// In TLA, it should be 4 -> Garcia (Felix)
+const PARTY_MAIN_LEADER_INDEX: [usize; 2] = [0, 4];
+
+/// In TBS, we only have four available members: Robin (Isaac), Gerald (Garet), Ivan and Mary/Mearī (Mia).
+/// We should also include Garcia (Felix), Jasmine (Jenna) and Shiba (Sheba).
+/// In TLA, well, We have Picard (Piers) in party now.
+const PARTY_MEMBERS_COUNT: [usize; 2] = [7, 8];
+const PC_NAME_LOCATION: [usize; 2] = [0x510, 0x530];
+const BUILD_DATE_LOCATION: [[usize; 3]; 2] = [[0x36usize, 0x250usize, 0x508usize], [0x36usize, 0x250usize, 0x528usize]];
+
+/// Save slot size - header size
+/// Header size is 0x10.
+/// TBS: 0x1000 - 0x10
+/// TLA: 0x3000 - 0x10
+const CHECKSUM_RANGE: [usize; 2] = [0xFF0, 0x2FF0];
 
 #[derive(Clone, Copy)]
 enum GameType {
@@ -93,13 +117,6 @@ fn main() {
     )
     .arg(
       arg!(
-        -g --game <VALUE> "1 for GS1 save file, 2 for GS2"
-      )
-        .required(true)
-        .requires("content")
-    )
-    .arg(
-      arg!(
         -n --name <VALUE> "Change party members' names"
       ).required(false)
     )
@@ -127,7 +144,6 @@ fn main() {
   let raw_input_path = matches.get_one::<PathBuf>("INPUT_FILE").unwrap();
   let mut input_file = File::open(raw_input_path).expect("An error occurred while opening save file!");
 
-
   /* Check the size of save file.
      The size of save file should be 64KB,
      though the .SaveRAM file created by Bizhawk is 128KB.
@@ -138,32 +154,25 @@ fn main() {
     return;
   }
 
-  let mut game_type_option: Option<GameType> = None;
-  if let Some(game) = matches.get_one::<String>("game") {
-    game_type_option = match game.as_str() {
-      "1" => Some(GameType::TheBrokenSeal),
-      "2" => Some(GameType::TheLostAge),
-      _ => {
-        eprintln!("Please input a valid game type value!\nAvailable values: 1, 2\nExample: -g 2");
-        return;
-      }
-    }
+  // Get raw save.
+  let mut raw_save_file = Vec::new();
+  input_file.read_to_end(&mut raw_save_file).unwrap();
+
+  // Detect game/save type.
+  let game_type_option = get_game_type(&raw_save_file);
+  if Some(game_type_option).is_none() {
+    eprintln!("It's not a valid Golden Sun save file! Or there is no save data in save file!");
+    return;
   }
 
-  let mut name_type_option: Option<NameType> = None;
+  let mut pc_name_type_option: Option<NameType> = None;
   if let Some(name) = matches.get_one::<String>("name") {
-    name_type_option = match name.as_str() {
-      // j -> Japanese version
+    pc_name_type_option = match name.as_str() {
       "j" => Some(NameType::Japanese),
-      // e -> English version
       "e" => Some(NameType::English),
-      // g -> German version
       "g" => Some(NameType::German),
-      // s -> Spanish version
       "s" => Some(NameType::Spanish),
-      // f -> French version
       "f" => Some(NameType::French),
-      // i -> Italian version
       "i" => Some(NameType::Italian),
       // oc -> Chinese fan translation (old, GS2 only)
       "oc" => Some(NameType::ChineseFanTranslationMobileTeam),
@@ -180,19 +189,13 @@ fn main() {
   let mut build_date_type_option: Option<BuildDateType> = None;
   if let Some(build) = matches.get_one::<String>("build") {
     build_date_type_option = match build.as_str() {
-      // j -> Japanese version
       // nc -> Chinese fan translation by 2023 Team (new, GS1 only, based on Japanese version)
       "j" | "nc" => Some(BuildDateType::Japanese),
-      // e -> English version
       // oc -> Chinese fan translation by Mobile/Soma Team (old, GS2 only, based on English version)
       "e" | "oc" => Some(BuildDateType::English),
-      // g -> German version
       "g" => Some(BuildDateType::German),
-      // s -> Spanish version
       "s" => Some(BuildDateType::Spanish),
-      // f -> French version
       "f" => Some(BuildDateType::French),
-      // i -> Italian version
       "i" => Some(BuildDateType::Italian),
       // Invalid value
       _ => {
@@ -203,7 +206,7 @@ fn main() {
   }
 
   // Only for Chinese fan translations.
-  if let Some(name_type) = name_type_option {
+  if let Some(name_type) = pc_name_type_option {
     if let Some(game_type) = game_type_option {
       if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TheBrokenSeal)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TheLostAge)) {
         eprintln!("This combination is not supported!");
@@ -213,11 +216,7 @@ fn main() {
   }
 
   // Get output save data file.
-  let mut raw_save_file = Vec::new();
-  input_file.read_to_end(&mut raw_save_file).unwrap();
-
-  let output_save = convert_save(raw_save_file, game_type_option, name_type_option, build_date_type_option);
-
+  let output_save = convert_save(raw_save_file, game_type_option, pc_name_type_option, build_date_type_option);
   // Start to create and write output save file.
   let output_path;
   let mut output_file;
@@ -251,6 +250,44 @@ fn main() {
   output_file.write_all(&output_save).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
 }
 
+fn get_game_type(raw_save_file: &[u8]) -> Option<GameType> {
+  let mut is_tbs_save = false;
+  let mut is_tla_save = false;
+  for i in 0..16 {
+    for tbs_build_date in GS_BUILD_DATE[0] {
+      if u16::from_le_bytes(tbs_build_date) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
+        is_tbs_save = true;
+        break;
+      }
+    }
+    if is_tbs_save {
+      break;
+    }
+  }
+
+  if !is_tbs_save {
+    for i in 0..5 {
+      for tla_build_date in GS_BUILD_DATE[1] {
+        if u16::from_le_bytes(tla_build_date) == u16::from_le_bytes([raw_save_file[i * 0x3000 + 0x36], raw_save_file[i * 0x3000 + 0x37]]) {
+          is_tla_save = true;
+          break;
+        }
+      }
+      if is_tla_save {
+        break;
+      }
+    }
+  }
+
+  if is_tbs_save {
+    Some(GameType::TheBrokenSeal)
+  } else if is_tla_save {
+    Some(GameType::TheLostAge)
+  } else {
+    None
+  }
+}
+
 /* Links to other Golden Sun reference guide (save editing):
    https://gamefaqs.gamespot.com/gba/468548-golden-sun/faqs/43776
    https://gamefaqs.gamespot.com/gba/561356-golden-sun-the-lost-age/faqs/30811
@@ -273,80 +310,18 @@ fn main() {
    In the case where multiple headers have the same slot number, use the header with the highest priority number.
    That should leave you with up to 3 valid headers.
    The next 0x0FF0(GS1)/0x2FF0(GS2) bytes after the header constitute the save data for that file. */
-fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
-  let mut blank_save_slot_count = 0;
-  let camelot_header = [0x43u8, 0x41u8, 0x4Du8, 0x45u8, 0x4Cu8, 0x4Fu8, 0x54u8];
+fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
+  let game_type_index = match game_type_option.unwrap() {
+    GameType::TheBrokenSeal => 0,
+    GameType::TheLostAge => 1,
+  };
 
-  let game_type_index;
-  let max_loop;
-  let save_slot_size;
-  let party_leader;
-  let party_members_count;
-  let name_location;
-  let build_date_location;
-  let checksum_range;
-
-  match game_type_option.unwrap() {
-    GameType::TheBrokenSeal => {
-      // 0 -> Golden Sun
-      game_type_index = 0;
-      // The size of each save slot is 4KB.
-      save_slot_size = 0x1000;
-      // 64KB / 4KB = 16
-      max_loop = 16;
-      // 0 -> Robin (Isaac)
-      party_leader = 0;
-      // Include Garcia (Felix), Jasmine (Jenna) and Shiba. (Sheba)
-      party_members_count = 7;
-      name_location = 0x510;
-      build_date_location = [0x36usize, 0x250usize, 0x508usize];
-      // 0x1000 - 0x10 (header size)
-      checksum_range = 0xFF0;
-    }
-    GameType::TheLostAge => {
-      // 1 -> Golden Sun: The Lost Age
-      game_type_index = 1;
-      // The size of each save slot is 12KB.
-      save_slot_size = 0x3000;
-      // 64KB / 12KB = 5
-      max_loop = 5;
-      // 4 -> Garcia (Felix)
-      party_leader = 4;
-      // We have Picard (Piers) in party now.
-      party_members_count = 8;
-      name_location = 0x530;
-      build_date_location = [0x36usize, 0x250usize, 0x528usize];
-      // 0x3000 - 0x10 (header size)
-      checksum_range = 0x2FF0;
-    }
-  }
-
-  for i in 0..max_loop {
+  for i in 0..MAX_LOOP[game_type_index] {
     /* A lazy way to check if save slot has no save data.
        If the first byte is "FF", that means this slot does not contain any save data,
        then skip current iteration. */
-    if raw_save_file[i * save_slot_size] == 0xFF {
-      blank_save_slot_count += 1;
+    if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index]] == 0xFF {
       continue;
-    }
-
-    /* A lazy and inaccurate way to detect if save file is Golden Sun/Golden Sun: The Lost Age save file.
-       In Golden Sun/Golden Sun: The Lost Age, each save data(slot) take 4KB (0x1000)/ 12KB (0x3000) space.
-       The first 7 bytes of each slot containing save data are "CAMELOT". */
-    for j in 0..7 {
-      if raw_save_file[i * save_slot_size + j] != camelot_header[j] {
-        match game_type_index {
-          0 => eprintln!("The input save file is not a Golden Sun save file!"),
-          _ => eprintln!("The input save file is not a Golden Sun: The Lost Age save file!")
-        }
-        process::exit(1);
-      }
-    }
-
-    // A lazy way to check if you are using a GS1 save file as GS2 save file.
-    if game_type_index == 1 && ((raw_save_file[i * save_slot_size + 0x1000] == camelot_header[0] || raw_save_file[i * save_slot_size + 0x1000] == 0xFF) || (raw_save_file[i * save_slot_size + 0x2000] == camelot_header[0] || raw_save_file[i * save_slot_size + 0x2000] == 0xFF)) {
-      eprintln!("The input save file is not a Golden Sun: The Lost Age save file!");
-      process::exit(1);
     }
 
     /* Some backup save data does not store names and build date, so I think maybe I should skip this kind of save data...
@@ -354,7 +329,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
        If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
     let mut to_continue = true;
     for valid_build_date in GS_BUILD_DATE[game_type_index] {
-      if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * save_slot_size + build_date_location[0]], raw_save_file[i * save_slot_size + build_date_location[0] + 1]]) {
+      if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + 1]]) {
         to_continue = false;
         break;
       }
@@ -363,8 +338,8 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       continue;
     }
 
-    if let Some(name_type) = name_type_option {
-      let name_type_index: usize = match name_type {
+    if let Some(pc_name_type) = pc_name_type_option {
+      let pc_name_type_index: usize = match pc_name_type {
         NameType::Japanese => 0,
         NameType::English => 1,
         NameType::German => 2,
@@ -386,7 +361,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       if game_type_index == 1 {
         for j in 0..12 {
           // Compare the name to Garcia's name, to see if this name is same as main leader Garcia's name.
-          if raw_save_file[i * save_slot_size + 0x10 + j] != raw_save_file[i * save_slot_size + name_location + party_leader * 0x14C + j] {
+          if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] != raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + PARTY_MAIN_LEADER_INDEX[game_type_index] * 0x14C + j] {
             is_main_leader = false;
             break;
           }
@@ -398,29 +373,29 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
            Golden Sun: The Lost Age + is_main_leader -> Garcia */
         for j in 0..12 {
           if j < 7 {
-            raw_save_file[i * save_slot_size + 0x10 + j] = PC_NAME[name_type_index][party_leader][j];
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] = PC_NAME[pc_name_type_index][PARTY_MAIN_LEADER_INDEX[game_type_index]][j];
           } else {
-            raw_save_file[i * save_slot_size + 0x10 + j] = 0x00;
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] = 0x00;
           }
         }
       } else {
         // Golden Sun: The Lost Age + !is_main_leader -> Jasmine
         for j in 0..12 {
           if j < 7 {
-            raw_save_file[i * save_slot_size + 0x10 + j] = PC_NAME[name_type_index][party_leader + 1][j];
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] = PC_NAME[pc_name_type_index][PARTY_MAIN_LEADER_INDEX[game_type_index] + 1][j];
           } else {
-            raw_save_file[i * save_slot_size + 0x10 + j] = 0x00;
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] = 0x00;
           }
         }
       }
 
       // Change all party members' names.
-      for j in 0..party_members_count {
+      for j in 0..PARTY_MEMBERS_COUNT[game_type_index] {
         for k in 0..15 {
           if k < 7 {
-            raw_save_file[i * save_slot_size + name_location + j * 0x14C + k] = PC_NAME[name_type_index][j][k];
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + j * 0x14C + k] = PC_NAME[pc_name_type_index][j][k];
           } else {
-            raw_save_file[i * save_slot_size + name_location + j * 0x14C + k] = 0x00;
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + j * 0x14C + k] = 0x00;
           }
         }
       }
@@ -441,9 +416,9 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       };
 
       for j in 0..2 {
-        raw_save_file[i * save_slot_size + build_date_location[0] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * save_slot_size + build_date_location[1] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * save_slot_size + build_date_location[2] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][1] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][2] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
       }
     }
 
@@ -452,17 +427,12 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
        the game will not consider it as a valid save.
        If the checksum exceeds 4 digits(Hexadecimal, not decimal), just discard extra digits. */
     let mut checksum = 0;
-    for j in 0..checksum_range {
-      checksum += u32::from(raw_save_file[i * save_slot_size + 0x10 + j]);
+    for j in 0..CHECKSUM_RANGE[game_type_index] {
+      checksum += u32::from(raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j]);
     }
     let checksum_bytes = checksum.to_le_bytes();
-    raw_save_file[i * save_slot_size + 0x08] = checksum_bytes[0];
-    raw_save_file[i * save_slot_size + 0x09] = checksum_bytes[1];
-  }
-
-  if blank_save_slot_count == max_loop {
-    eprintln!("The save file has no save data!");
-    process::exit(1);
+    raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x08] = checksum_bytes[0];
+    raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x09] = checksum_bytes[1];
   }
 
   raw_save_file
