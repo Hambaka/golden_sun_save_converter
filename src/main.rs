@@ -34,10 +34,11 @@ const GS_BUILD_DATE: [[[u8; 2]; 6]; 2] = [
    Spanish:                                    "Hans",   "Garet",      "Iván",   "Mia",      "Félix",    "Nadia",      "Sole",  "Piers"
    French:                                     "Vlad",   "Garet",      "Ivan",   "Sofia",    "Pavel",    "Lina",       "Cylia", "Piers"
    Italian:                                    "Isaac",  "Garet",      "Ivan",   "Mia",      "Felix",    "Jenna",      "Sara",  "Piers"
-   Chinese fan translation by Mobile/Soma Team for GS2 (Share same encoding)
+   Chinese fan translation by Mobile/Soma Team for GS2 (SC and TC share same encoding)
    ├── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "米雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德"
    └── Traditional Chinese:                    "羅賓",   "傑拉德",     "伊萬",   "米雅莉",   "加西亞",   "加斯敏",     "西芭",  "皮卡德"
-   Simplified Chinese fan translation by 2023 Team for GS1: "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德" */
+   Chinese fan translation by 2023 Team for GS1
+   └── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德" */
 const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0xDB, 0xCB, 0xDE, 0xDD, 0x00, 0x00, 0x00], [0xBC, 0xDE, 0xAA, 0xD7, 0xD9, 0xC4, 0xDE], [0xB2, 0xDC, 0xDD, 0x00, 0x00, 0x00, 0x00], [0xD2, 0xB1, 0xD8, 0xA8, 0x00, 0x00, 0x00], [0xB6, 0xDE, 0xD9, 0xBC, 0xB1, 0x00, 0x00], [0xBC, 0xDE, 0xAC, 0xBD, 0xD0, 0xDD, 0x00], [0xBC, 0xCA, 0xDE, 0x00, 0x00, 0x00, 0x00], [0xCB, 0xDF, 0xB6, 0xB0, 0xC4, 0xDE, 0x00]],
   [[0x49, 0x73, 0x61, 0x61, 0x63, 0x00, 0x00], [0x47, 0x61, 0x72, 0x65, 0x74, 0x00, 0x00], [0x49, 0x76, 0x61, 0x6E, 0x00, 0x00, 0x00], [0x4D, 0x69, 0x61, 0x00, 0x00, 0x00, 0x00], [0x46, 0x65, 0x6C, 0x69, 0x78, 0x00, 0x00], [0x4A, 0x65, 0x6E, 0x6E, 0x61, 0x00, 0x00], [0x53, 0x68, 0x65, 0x62, 0x61, 0x00, 0x00], [0x50, 0x69, 0x65, 0x72, 0x73, 0x00, 0x00]],
@@ -201,6 +202,7 @@ fn main() {
     };
   }
 
+  // Only for Chinese fan translations.
   if let Some(name_type) = name_type_option {
     if let Some(game_type) = game_type_option {
       if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TheBrokenSeal)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TheLostAge)) {
@@ -251,7 +253,26 @@ fn main() {
 
 /* Links to other Golden Sun reference guide (save editing):
    https://gamefaqs.gamespot.com/gba/468548-golden-sun/faqs/43776
-   https://gamefaqs.gamespot.com/gba/561356-golden-sun-the-lost-age/faqs/30811 */
+   https://gamefaqs.gamespot.com/gba/561356-golden-sun-the-lost-age/faqs/30811
+
+   ----------------------------------------------------------------------------------
+   More reference info/comment about Golden Sun save file from Dyrati (in "Obababot")
+
+   https://github.com/Dyrati/obababot/blob/main/obababot/gsfuncs.py
+   At line 579, the "get_save_data" function takes raw binary .sav data and returns individual save slots with all of the info from each valid save.
+   The function checks the file at 1000 byte intervals.
+
+   The first 16 bytes of each interval (the header) are organized as follows:
+   - 7 bytes for the ASCII string "CAMELOT"
+   - 1 byte for the slot number
+   - 2 bytes for a checksum
+   - 2 bytes for a priority number
+   - 4 bytes of garbage data
+
+   A header is valid if the first 7 bytes spell "CAMELOT", and the slot number is less than 16.
+   In the case where multiple headers have the same slot number, use the header with the highest priority number.
+   That should leave you with up to 3 valid headers.
+   The next 0x0FF0(GS1)/0x2FF0(GS2) bytes after the header constitute the save data for that file. */
 fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
   let mut blank_save_slot_count = 0;
   let camelot_header = [0x43u8, 0x41u8, 0x4Du8, 0x45u8, 0x4Cu8, 0x4Fu8, 0x54u8];
