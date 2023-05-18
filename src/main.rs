@@ -160,7 +160,7 @@ fn main() {
 
   // Detect game/save type.
   let game_type_option = get_game_type(&raw_save_file);
-  if Some(game_type_option).is_none() {
+  if game_type_option.is_none() {
     eprintln!("It's not a valid Golden Sun save file! Or there is no save data in save file!");
     return;
   }
