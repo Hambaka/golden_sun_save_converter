@@ -254,28 +254,18 @@ fn get_game_type(raw_save_file: &[u8]) -> Option<GameType> {
   let mut is_tbs_save = false;
   let mut is_tla_save = false;
   for i in 0..16 {
-    for tbs_build_date in GS_BUILD_DATE[0] {
-      if u16::from_le_bytes(tbs_build_date) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
+    for gs_build_date in GS_BUILD_DATE {
+      if u16::from_le_bytes(gs_build_date[0]) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
         is_tbs_save = true;
         break;
       }
-    }
-    if is_tbs_save {
-      break;
-    }
-  }
-
-  if !is_tbs_save {
-    for i in 0..5 {
-      for tla_build_date in GS_BUILD_DATE[1] {
-        if u16::from_le_bytes(tla_build_date) == u16::from_le_bytes([raw_save_file[i * 0x3000 + 0x36], raw_save_file[i * 0x3000 + 0x37]]) {
-          is_tla_save = true;
-          break;
-        }
-      }
-      if is_tla_save {
+      if u16::from_le_bytes(gs_build_date[1]) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
+        is_tla_save = true;
         break;
       }
+    }
+    if is_tbs_save || is_tla_save {
+      break;
     }
   }
 
