@@ -343,15 +343,23 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       }
     }
 
-    // A lazy way to check if you are using a GS2 save file as GS1 save file.
+    // A lazy way to check if you are using a GS1 save file as GS2 save file.
     if game_type_index == 1 && ((raw_save_file[i * save_slot_size + 0x1000] == camelot_header[0] || raw_save_file[i * save_slot_size + 0x1000] == 0xFF) || (raw_save_file[i * save_slot_size + 0x2000] == camelot_header[0] || raw_save_file[i * save_slot_size + 0x2000] == 0xFF)) {
       eprintln!("The input save file is not a Golden Sun: The Lost Age save file!");
       process::exit(1);
     }
 
     /* Some backup save data does not store names and build date, so I think maybe I should skip this kind of save data...
-       Another lazy way to detect it, if there is a valid name, the name should end with 0x00. */
-    if raw_save_file[i * save_slot_size + 0x10] != 0x00 && raw_save_file[i * save_slot_size + 0x11] == 0x00 && raw_save_file[i * save_slot_size + 0x12] != 0x00 {
+       But seems we only need to get save's build date to see if the build date is valid.
+       If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
+    let mut to_continue = true;
+    for valid_build_date in GS_BUILD_DATE[game_type_index] {
+      if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * save_slot_size + build_date_location[0]], raw_save_file[i * save_slot_size + build_date_location[0] + 1]]) {
+        to_continue = false;
+        break;
+      }
+    }
+    if to_continue {
       continue;
     }
 
