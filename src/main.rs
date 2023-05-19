@@ -6,7 +6,7 @@ use std::string::String;
 use clap::{Command, arg, ArgGroup, value_parser};
 
 /// 7 bytes for the ASCII string "CAMELOT" in each save's header.
-const CAMELOT_ASCII_STRING_HEADER: &str = "CAMELOT";
+const HEADER_CAMELOT_ASCII_STRING: &str = "CAMELOT";
 
 /// Golden Sun/Golden Sun: The Lost Age build date
 /// Source: Golden Sun Hacking Community Discord Server
@@ -58,7 +58,7 @@ const SAVE_SLOT_SIZE: [usize; 2] = [0x1000, 0x3000];
 
 /// TBS: 64KB / 4KB = 16
 /// TLA: 64KB / 12KB = 5
-const MAX_LOOP: [usize; 2] = [16, 5];
+const MAX_LOOP_COUNT: [usize; 2] = [16, 5];
 
 /// In TBS, it should be 0 -> Robin (Isaac)
 /// In TLA, it should be 4 -> Garcia (Felix)
@@ -68,14 +68,18 @@ const PARTY_MAIN_LEADER_INDEX: [usize; 2] = [0, 4];
 /// We should also include Garcia (Felix), Jasmine (Jenna) and Shiba (Sheba).
 /// In TLA, well, We have Picard (Piers) in party now.
 const PARTY_MEMBERS_COUNT: [usize; 2] = [7, 8];
-const PC_NAME_LOCATION: [usize; 2] = [0x510, 0x530];
-const BUILD_DATE_LOCATION: [[usize; 3]; 2] = [[0x36, 0x250, 0x508], [0x36, 0x250, 0x528]];
+const PC_NAME_LOCATION_INDEX: [usize; 2] = [0x510, 0x530];
+const BUILD_DATE_LOCATION_INDEX: [[[usize; 2]; 3]; 2] = [
+  [[0x36, 0x37], [0x250, 0x251], [0x508, 0x509]],
+  [[0x36, 0x37], [0x250, 0x251], [0x528, 0x529]]
+];
 
 /// Save slot size - header size
 /// Header size is 0x10.
 /// TBS: 0x1000 - 0x10
 /// TLA: 0x3000 - 0x10
 const CHECKSUM_RANGE: [usize; 2] = [0xFF0, 0x2FF0];
+const HEADER_CHECKSUM_LOCATION_INDEX: [usize; 2] = [0x08, 0x09];
 
 #[derive(Clone, Copy)]
 enum GameType {
@@ -164,12 +168,11 @@ fn main() {
   // Detect game/save type, also get loop start index.
   let game_type_with_loop_start_index = get_game_type_with_loop_start_index(&raw_save_file);
   let game_type_option = game_type_with_loop_start_index.0;
-  let loop_start_index = game_type_with_loop_start_index.1;
-
   if game_type_option.is_none() {
     eprintln!("It's not a valid Golden Sun save file! Or there is no save data in save file!");
     return;
   }
+  let loop_start_index = game_type_with_loop_start_index.1;
 
   let mut pc_name_type_option: Option<NameType> = None;
   if let Some(name) = matches.get_one::<String>("name") {
@@ -259,20 +262,20 @@ fn main() {
 fn get_game_type_with_loop_start_index(raw_save_file: &[u8]) -> (Option<GameType>, usize) {
   let mut is_tbs_save = false;
   let mut is_tla_save = false;
-  let mut loop_start_index = MAX_LOOP[0];
-  for i in 0..MAX_LOOP[0] {
-    let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + 0x07)]) else { continue; };
-    if !header_string.eq(CAMELOT_ASCII_STRING_HEADER) {
+  let mut loop_start_index = MAX_LOOP_COUNT[0];
+  for i in 0..MAX_LOOP_COUNT[0] {
+    let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + HEADER_CAMELOT_ASCII_STRING.len())]) else { continue; };
+    if !header_string.eq(HEADER_CAMELOT_ASCII_STRING) {
       continue;
     }
 
     for j in 0..6 {
-      if u16::from_le_bytes(GS_BUILD_DATE[0][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0] + 1]]) {
+      if u16::from_le_bytes(GS_BUILD_DATE[0][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]) {
         is_tbs_save = true;
         loop_start_index = i;
         break;
       }
-      if u16::from_le_bytes(GS_BUILD_DATE[1][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0] + 1]]) {
+      if u16::from_le_bytes(GS_BUILD_DATE[1][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]) {
         is_tla_save = true;
         loop_start_index = i / 3;
         break;
@@ -321,14 +324,14 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
     GameType::TheLostAge => 1,
   };
 
-  for i in loop_start_index..MAX_LOOP[game_type_index] {
+  for i in loop_start_index..MAX_LOOP_COUNT[game_type_index] {
     /* Some backup save data does not store names and build date, so I think maybe I should skip this kind of save data...
        But seems we only need to get save's build date to see if the build date is valid.
        If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
     if i > loop_start_index {
       let mut to_continue = true;
       for valid_build_date in GS_BUILD_DATE[game_type_index] {
-        if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + 1]]) {
+        if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][1]]]) {
           to_continue = false;
           break;
         }
@@ -361,7 +364,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       if game_type_index == 1 {
         for j in 0..12 {
           // Compare the name to Garcia's name, to see if this name is same as main leader Garcia's name.
-          if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] != raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + PARTY_MAIN_LEADER_INDEX[game_type_index] * 0x14C + j] {
+          if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j] != raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION_INDEX[game_type_index] + PARTY_MAIN_LEADER_INDEX[game_type_index] * 0x14C + j] {
             is_main_leader = false;
             break;
           }
@@ -393,9 +396,9 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       for j in 0..PARTY_MEMBERS_COUNT[game_type_index] {
         for k in 0..15 {
           if k < 7 {
-            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + j * 0x14C + k] = PC_NAME[pc_name_type_index][j][k];
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION_INDEX[game_type_index] + j * 0x14C + k] = PC_NAME[pc_name_type_index][j][k];
           } else {
-            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION[game_type_index] + j * 0x14C + k] = 0x00;
+            raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + PC_NAME_LOCATION_INDEX[game_type_index] + j * 0x14C + k] = 0x00;
           }
         }
       }
@@ -416,9 +419,9 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       };
 
       for j in 0..2 {
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][1] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][2] + j] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][1][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][2][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
       }
     }
 
@@ -431,8 +434,9 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       checksum += u32::from(raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x10 + j]);
     }
     let checksum_bytes = checksum.to_le_bytes();
-    raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x08] = checksum_bytes[0];
-    raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + 0x09] = checksum_bytes[1];
+    for j in 0..2 {
+      raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + HEADER_CHECKSUM_LOCATION_INDEX[j]] = checksum_bytes[j];
+    }
   }
 
   raw_save_file
