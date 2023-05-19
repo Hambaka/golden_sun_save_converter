@@ -5,6 +5,9 @@ use std::path::{Path, PathBuf};
 use std::string::String;
 use clap::{Command, arg, ArgGroup, value_parser};
 
+/// 7 bytes for the ASCII string "CAMELOT" in each save's header.
+const CAMELOT_ASCII_STRING_HEADER: &str = "CAMELOT";
+
 /// Golden Sun/Golden Sun: The Lost Age build date
 /// Source: Golden Sun Hacking Community Discord Server
 /// GS1 (J) = 0x159C
@@ -66,7 +69,7 @@ const PARTY_MAIN_LEADER_INDEX: [usize; 2] = [0, 4];
 /// In TLA, well, We have Picard (Piers) in party now.
 const PARTY_MEMBERS_COUNT: [usize; 2] = [7, 8];
 const PC_NAME_LOCATION: [usize; 2] = [0x510, 0x530];
-const BUILD_DATE_LOCATION: [[usize; 3]; 2] = [[0x36usize, 0x250usize, 0x508usize], [0x36usize, 0x250usize, 0x528usize]];
+const BUILD_DATE_LOCATION: [[usize; 3]; 2] = [[0x36, 0x250, 0x508], [0x36, 0x250, 0x528]];
 
 /// Save slot size - header size
 /// Header size is 0x10.
@@ -158,8 +161,11 @@ fn main() {
   let mut raw_save_file = Vec::new();
   input_file.read_to_end(&mut raw_save_file).unwrap();
 
-  // Detect game/save type.
-  let game_type_option = get_game_type(&raw_save_file);
+  // Detect game/save type, also get loop start index.
+  let game_type_with_loop_start_index = get_game_type_with_loop_start_index(&raw_save_file);
+  let game_type_option = game_type_with_loop_start_index.0;
+  let loop_start_index = game_type_with_loop_start_index.1;
+
   if game_type_option.is_none() {
     eprintln!("It's not a valid Golden Sun save file! Or there is no save data in save file!");
     return;
@@ -216,7 +222,7 @@ fn main() {
   }
 
   // Get output save data file.
-  let output_save = convert_save(raw_save_file, game_type_option, pc_name_type_option, build_date_type_option);
+  let output_save = convert_save(raw_save_file, game_type_option, loop_start_index, pc_name_type_option, build_date_type_option);
   // Start to create and write output save file.
   let output_path;
   let mut output_file;
@@ -250,31 +256,40 @@ fn main() {
   output_file.write_all(&output_save).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
 }
 
-fn get_game_type(raw_save_file: &[u8]) -> Option<GameType> {
+fn get_game_type_with_loop_start_index(raw_save_file: &[u8]) -> (Option<GameType>, usize) {
   let mut is_tbs_save = false;
   let mut is_tla_save = false;
-  for i in 0..16 {
-    for gs_build_date in GS_BUILD_DATE {
-      if u16::from_le_bytes(gs_build_date[0]) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
+  let mut loop_start_index = MAX_LOOP[0];
+  for i in 0..MAX_LOOP[0] {
+    let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + 0x07)]) else { continue; };
+    if !header_string.eq(CAMELOT_ASCII_STRING_HEADER) {
+      continue;
+    }
+
+    for j in 0..6 {
+      if u16::from_le_bytes(GS_BUILD_DATE[0][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0] + 1]]) {
         is_tbs_save = true;
+        loop_start_index = i;
         break;
       }
-      if u16::from_le_bytes(gs_build_date[1]) == u16::from_le_bytes([raw_save_file[i * 0x1000 + 0x36], raw_save_file[i * 0x1000 + 0x37]]) {
+      if u16::from_le_bytes(GS_BUILD_DATE[1][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION[0][0] + 1]]) {
         is_tla_save = true;
+        loop_start_index = i / 3;
         break;
       }
     }
+
     if is_tbs_save || is_tla_save {
       break;
     }
   }
 
   if is_tbs_save {
-    Some(GameType::TheBrokenSeal)
+    (Some(GameType::TheBrokenSeal), loop_start_index)
   } else if is_tla_save {
-    Some(GameType::TheLostAge)
+    (Some(GameType::TheLostAge), loop_start_index)
   } else {
-    None
+    (None, loop_start_index)
   }
 }
 
@@ -300,32 +315,27 @@ fn get_game_type(raw_save_file: &[u8]) -> Option<GameType> {
    In the case where multiple headers have the same slot number, use the header with the highest priority number.
    That should leave you with up to 3 valid headers.
    The next 0x0FF0(GS1)/0x2FF0(GS2) bytes after the header constitute the save data for that file. */
-fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
+fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, loop_start_index: usize, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
   let game_type_index = match game_type_option.unwrap() {
     GameType::TheBrokenSeal => 0,
     GameType::TheLostAge => 1,
   };
 
-  for i in 0..MAX_LOOP[game_type_index] {
-    /* A lazy way to check if save slot has no save data.
-       If the first byte is "FF", that means this slot does not contain any save data,
-       then skip current iteration. */
-    if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index]] == 0xFF {
-      continue;
-    }
-
+  for i in loop_start_index..MAX_LOOP[game_type_index] {
     /* Some backup save data does not store names and build date, so I think maybe I should skip this kind of save data...
        But seems we only need to get save's build date to see if the build date is valid.
        If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
-    let mut to_continue = true;
-    for valid_build_date in GS_BUILD_DATE[game_type_index] {
-      if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + 1]]) {
-        to_continue = false;
-        break;
+    if i > loop_start_index {
+      let mut to_continue = true;
+      for valid_build_date in GS_BUILD_DATE[game_type_index] {
+        if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION[game_type_index][0] + 1]]) {
+          to_continue = false;
+          break;
+        }
       }
-    }
-    if to_continue {
-      continue;
+      if to_continue {
+        continue;
+      }
     }
 
     if let Some(pc_name_type) = pc_name_type_option {
