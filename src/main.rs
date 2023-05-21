@@ -324,7 +324,8 @@ fn get_game_type_with_loop_start_index(raw_save_file: &[u8]) -> (Option<GameType
    In the .sav file, each section is 0x1000 bytes long.
    However two separate sections are joined together to create one save file.
    Some sections have slot numbers of 3, 4, or 5,
-   those sections are the second half of slots 0, 1, and 2 respectively. */
+   those sections are the second half of slots 0, 1, and 2 respectively.
+   But seems the second half of the save doesn't store the data for generating password. */
 fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, loop_start_index: usize, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
   let game_type_index = match game_type_option.unwrap() {
     GameType::TheBrokenSeal => 0,
