@@ -9,10 +9,10 @@
 ![Platform](https://img.shields.io/badge/platform%20(x86--64)-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)
 [![Version](https://img.shields.io/github/v/release/Hambaka/golden_sun_save_converter?label=version&style=flat-square)](https://github.com/Hambaka/golden_sun_save_converter/releases/latest)
 
-黄金太阳存档版本转换工具，可以将主角团所有成员的名字更改为指定语言版本的默认姓名，也可以通过修改存档中记录的游戏构建日期来转换存档版本。  
+　　黄金太阳存档版本转换工具，可以将主角团所有成员的名字更改为指定语言版本的默认姓名，也可以通过修改存档中记录的游戏构建日期来转换存档版本。  
 
 ## 使用方法 (待完成)
-```shell
+```
 使用方法： golden_sun_save_converter [选项] <--name <名字版本>|--build <构建日期版本>> <要转换的存档文件>
 
 参数：
