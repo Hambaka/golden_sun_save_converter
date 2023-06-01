@@ -10,22 +10,26 @@ const HEADER_CAMELOT_ASCII_STRING: &str = "CAMELOT";
 
 /// Golden Sun/Golden Sun: The Lost Age build date
 /// Source: Golden Sun Hacking Community Discord Server
-/// GS1 (J) = 0x159C
-/// GS1 (U) = 0x1652
-/// GS1 (G) = 0x1849
-/// GS1 (S) = 0x1885
-/// GS1 (F) = 0x1713
-/// GS1 (I) = 0x1886
 ///
-/// GS2 (J) = 0x198A
-/// GS2 (U) = 0x1C85
-/// GS2 (G) = 0x1D97
-/// GS2 (S) = 0x1DC7
-/// GS2 (F) = 0x1D98
-/// GS2 (I) = 0x1DC8
-const GS_BUILD_DATE: [[[u8; 2]; 6]; 2] = [
-  [[0x9C, 0x15], [0x52, 0x16], [0x49, 0x18], [0x85, 0x18], [0x13, 0x17], [0x86, 0x18]],
-  [[0x8A, 0x19], [0x85, 0x1C], [0x97, 0x1D], [0xC7, 0x1D], [0x98, 0x1D], [0xC8, 0x1D]]
+/// Value: 0x1000 | 1024 * year + 64 * month + day
+/// Note: Year is "1", "2", not "2001", "2002"
+///
+/// GS1 (J) = 0x159C -> 2001/06/28
+/// GS1 (U) = 0x1652 -> 2001/09/18
+/// GS1 (G) = 0x1849 -> 2002/01/09
+/// GS1 (S) = 0x1885 -> 2002/02/05
+/// GS1 (F) = 0x1713 -> 2001/12/19
+/// GS1 (I) = 0x1886 -> 2002/02/06
+///
+/// GS2 (J) = 0x198A -> 2002/06/10
+/// GS2 (U) = 0x1C85 -> 2003/02/05
+/// GS2 (G) = 0x1D97 -> 2003/06/23
+/// GS2 (S) = 0x1DC7 -> 2003/07/07
+/// GS2 (F) = 0x1D98 -> 2003/06/24
+/// GS2 (I) = 0x1DC8 -> 2003/07/08
+const GS_BUILD_DATE: [[u16; 6]; 2] = [
+  [0x159C, 0x1652, 0x1849, 0x1885, 0x1713, 0x1886],
+  [0x198A, 0x1C85, 0x1D97, 0x1DC7, 0x1D98, 0x1DC8]
 ];
 
 /// Main characters' default names in different languages.
@@ -40,7 +44,12 @@ const GS_BUILD_DATE: [[[u8; 2]; 6]; 2] = [
 /// ├── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "米雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德"
 /// └── Traditional Chinese:                    "羅賓",   "傑拉德",     "伊萬",   "米雅莉",   "加西亞",   "加斯敏",     "西芭",  "皮卡德"
 /// Chinese fan translation by 2023 Team for GS1
-/// └── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德" */
+/// └── Simplified Chinese:                     "罗宾",   "杰拉德",     "伊万",   "梅雅莉",   "加西亚",   "加斯敏",     "西芭",  "皮卡德"
+///
+/// Note: In the Korean fan translation version by pjs0493, the main characters' names are used from the Japanese version.
+///       Translation patch source: [TBS](https://blog.naver.com/pjs0493/220449867529) and [TLA](https://blog.naver.com/pjs0493/220489958082)
+///       In the Polish fan translation version by Rykuzushi, the main characters' names are used from the English version.
+///       Translation patch source: [TBS](https://www.romhacking.net/translations/1078/)
 const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0xDB, 0xCB, 0xDE, 0xDD, 0x00, 0x00, 0x00], [0xBC, 0xDE, 0xAA, 0xD7, 0xD9, 0xC4, 0xDE], [0xB2, 0xDC, 0xDD, 0x00, 0x00, 0x00, 0x00], [0xD2, 0xB1, 0xD8, 0xA8, 0x00, 0x00, 0x00], [0xB6, 0xDE, 0xD9, 0xBC, 0xB1, 0x00, 0x00], [0xBC, 0xDE, 0xAC, 0xBD, 0xD0, 0xDD, 0x00], [0xBC, 0xCA, 0xDE, 0x00, 0x00, 0x00, 0x00], [0xCB, 0xDF, 0xB6, 0xB0, 0xC4, 0xDE, 0x00]],
   [[0x49, 0x73, 0x61, 0x61, 0x63, 0x00, 0x00], [0x47, 0x61, 0x72, 0x65, 0x74, 0x00, 0x00], [0x49, 0x76, 0x61, 0x6E, 0x00, 0x00, 0x00], [0x4D, 0x69, 0x61, 0x00, 0x00, 0x00, 0x00], [0x46, 0x65, 0x6C, 0x69, 0x78, 0x00, 0x00], [0x4A, 0x65, 0x6E, 0x6E, 0x61, 0x00, 0x00], [0x53, 0x68, 0x65, 0x62, 0x61, 0x00, 0x00], [0x50, 0x69, 0x65, 0x72, 0x73, 0x00, 0x00]],
@@ -83,7 +92,9 @@ const HEADER_CHECKSUM_LOCATION_INDEX: [usize; 2] = [0x08, 0x09];
 
 #[derive(Clone, Copy)]
 enum GameType {
+  // GS1
   TheBrokenSeal,
+  // GS2
   TheLostAge,
 }
 
@@ -147,6 +158,60 @@ fn main() {
     )
     .get_matches();
 
+  let mut pc_name_type_option: Option<NameType> = None;
+  if let Some(name) = matches.get_one::<String>("name") {
+    pc_name_type_option = match name.as_str() {
+      "j" | "k" => Some(NameType::Japanese),
+      "e" | "p" => Some(NameType::English),
+      "g" => Some(NameType::German),
+      "s" => Some(NameType::Spanish),
+      "f" => Some(NameType::French),
+      "i" => Some(NameType::Italian),
+      // oc -> Chinese fan translation (old, GS2 only)
+      "oc" => Some(NameType::ChineseFanTranslationMobileTeam),
+      // nc -> Chinese fan translation (new, GS1 only)
+      "nc" => Some(NameType::ChineseFanTranslation2023Team),
+      // Invalid value
+      _ => {
+        eprintln!("Please input a valid name type!");
+        eprintln!("Available values: j, e, g, s, f, i, oc, nc");
+        eprintln!(" j: Japanese, e: English, g: Germany");
+        eprintln!(" f: French,   i: Italy,   s: Spanish");
+        eprintln!("oc: Chinese (TLA only),  nc: Chinese (TBS only)");
+        eprintln!(" p: English,  k: Japanese");
+        eprintln!("Example: -n e");
+        return;
+      }
+    }
+  };
+
+  let mut build_date_type_option: Option<BuildDateType> = None;
+  if let Some(build) = matches.get_one::<String>("build") {
+    build_date_type_option = match build.as_str() {
+      // nc -> Chinese fan translation by 2023 Team (new, TBS only, based on Japanese version)
+      // k -> Korean fan translation by pjs0493 (TBS & TLA, based on Japanese version).
+      "j" | "nc" | "k" => Some(BuildDateType::Japanese),
+      // oc -> Chinese fan translation by Mobile/Soma Team (old, TLA only, based on English version)
+      // p -> Polish fan translation by Rykuzushi (TBS only, based on English version)
+      "u" | "e" | "oc" | "p" => Some(BuildDateType::English),
+      "g" => Some(BuildDateType::German),
+      "s" => Some(BuildDateType::Spanish),
+      "f" => Some(BuildDateType::French),
+      "i" => Some(BuildDateType::Italian),
+      // Invalid value
+      _ => {
+        eprintln!("Please input a valid build date type!");
+        eprintln!("Available values: j, e, g, s, f, i, oc, nc");
+        eprintln!("j:  Japan,   u: USA/Europe, e: USA/Europe");
+        eprintln!("g:  Germany, s: Spanish,    f: France,    i: Italy");
+        eprintln!("oc: USA/Europe (TLA only), nc: Japan (TBS only)");
+        eprintln!("p:  USA/Europe,             k: Japan");
+        eprintln!("Example: -b e");
+        return;
+      }
+    };
+  }
+
   // Read save file.
   let raw_input_path = matches.get_one::<PathBuf>("INPUT_FILE").unwrap();
   let mut input_file = File::open(raw_input_path).expect("An error occurred while opening save file!");
@@ -166,53 +231,12 @@ fn main() {
   input_file.read_to_end(&mut raw_save_file).unwrap();
 
   // Detect game/save type, also get loop start index.
-  let game_type_with_loop_start_index = get_game_type_with_loop_start_index(&raw_save_file);
-  let game_type_option = game_type_with_loop_start_index.0;
+  let (game_type_option, loop_start_index_option) = get_game_type_with_loop_start_index_option(&raw_save_file);
   if game_type_option.is_none() {
-    eprintln!("It's not a valid Golden Sun save file! Or there is no save data in save file!");
+    eprintln!("It's not a valid Golden Sun/Golden Sun: The Lost age save file! Or there is no save data in save file!");
     return;
   }
-  let loop_start_index = game_type_with_loop_start_index.1;
-
-  let mut pc_name_type_option: Option<NameType> = None;
-  if let Some(name) = matches.get_one::<String>("name") {
-    pc_name_type_option = match name.as_str() {
-      "j" => Some(NameType::Japanese),
-      "e" => Some(NameType::English),
-      "g" => Some(NameType::German),
-      "s" => Some(NameType::Spanish),
-      "f" => Some(NameType::French),
-      "i" => Some(NameType::Italian),
-      // oc -> Chinese fan translation (old, GS2 only)
-      "oc" => Some(NameType::ChineseFanTranslationMobileTeam),
-      // nc -> Chinese fan translation (new, GS1 only)
-      "nc" => Some(NameType::ChineseFanTranslation2023Team),
-      // Invalid value
-      _ => {
-        eprintln!("Please input a valid name type value!\nAvailable values: j, e, g, s, f, i, oc, nc\nExample: -n e");
-        return;
-      }
-    }
-  };
-
-  let mut build_date_type_option: Option<BuildDateType> = None;
-  if let Some(build) = matches.get_one::<String>("build") {
-    build_date_type_option = match build.as_str() {
-      // nc -> Chinese fan translation by 2023 Team (new, GS1 only, based on Japanese version)
-      "j" | "nc" => Some(BuildDateType::Japanese),
-      // oc -> Chinese fan translation by Mobile/Soma Team (old, GS2 only, based on English version)
-      "e" | "oc" => Some(BuildDateType::English),
-      "g" => Some(BuildDateType::German),
-      "s" => Some(BuildDateType::Spanish),
-      "f" => Some(BuildDateType::French),
-      "i" => Some(BuildDateType::Italian),
-      // Invalid value
-      _ => {
-        eprintln!("Please input a valid build date type value!\nAvailable values: j, e, g, s, f, i, oc, nc\nExample: -b e");
-        return;
-      }
-    };
-  }
+  let loop_start_index = loop_start_index_option.unwrap();
 
   // Only for Chinese fan translations.
   if let Some(name_type) = pc_name_type_option {
@@ -259,41 +283,24 @@ fn main() {
   output_file.write_all(&output_save).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
 }
 
-fn get_game_type_with_loop_start_index(raw_save_file: &[u8]) -> (Option<GameType>, usize) {
-  let mut is_tbs_save = false;
-  let mut is_tla_save = false;
-  let mut loop_start_index = MAX_LOOP_COUNT[0];
+fn get_game_type_with_loop_start_index_option(raw_save_file: &[u8]) -> (Option<GameType>, Option<usize>) {
   for i in 0..MAX_LOOP_COUNT[0] {
     let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + HEADER_CAMELOT_ASCII_STRING.len())]) else { continue; };
     if !header_string.eq(HEADER_CAMELOT_ASCII_STRING) {
       continue;
     }
 
-    for j in 0..6 {
-      if u16::from_le_bytes(GS_BUILD_DATE[0][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]) {
-        is_tbs_save = true;
-        loop_start_index = i;
-        break;
-      }
-      if u16::from_le_bytes(GS_BUILD_DATE[1][j]) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]) {
-        is_tla_save = true;
-        loop_start_index = i / 3;
-        break;
-      }
+    let build_date_from_raw_save_as_tbs = u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]);
+    if GS_BUILD_DATE[0].contains(&build_date_from_raw_save_as_tbs) {
+      return (Some(GameType::TheBrokenSeal), Some(i));
     }
-
-    if is_tbs_save || is_tla_save {
-      break;
+    let build_date_from_raw_save_as_tla = u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[0] + BUILD_DATE_LOCATION_INDEX[0][0][1]]]);
+    if GS_BUILD_DATE[1].contains(&build_date_from_raw_save_as_tla) {
+      return (Some(GameType::TheLostAge), Some(i / 3));
     }
   }
 
-  if is_tbs_save {
-    (Some(GameType::TheBrokenSeal), loop_start_index)
-  } else if is_tla_save {
-    (Some(GameType::TheLostAge), loop_start_index)
-  } else {
-    (None, loop_start_index)
-  }
+  (None, None)
 }
 
 /* Links to other Golden Sun reference guide (save editing):
@@ -337,14 +344,8 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
        But seems we only need to get save's build date to see if the build date is valid.
        If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
     if i > loop_start_index {
-      let mut to_continue = true;
-      for valid_build_date in GS_BUILD_DATE[game_type_index] {
-        if u16::from_le_bytes(valid_build_date) == u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][1]]]) {
-          to_continue = false;
-          break;
-        }
-      }
-      if to_continue {
+      let build_date_from_raw_save = u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][1]]]);
+      if !GS_BUILD_DATE[game_type_index].contains(&build_date_from_raw_save) {
         continue;
       }
     }
@@ -426,10 +427,11 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
         BuildDateType::Italian => 5,
       };
 
+      let build_date = GS_BUILD_DATE[game_type_index][build_date_type_index].to_le_bytes();
       for j in 0..2 {
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][1][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
-        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][2][j]] = GS_BUILD_DATE[game_type_index][build_date_type_index][j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][j]] = build_date[j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][1][j]] = build_date[j];
+        raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][2][j]] = build_date[j];
       }
     }
 
