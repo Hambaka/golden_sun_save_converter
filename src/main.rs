@@ -121,32 +121,42 @@ enum BuildDateType {
 }
 
 fn main() {
+  // "long_about" looks weird?
+  let mut about_string = String::new();
+  about_string.push_str("A simple tool for two GBA games, Golden Sun and Golden Sun: The Lost Age.\n\n");
+  about_string.push_str("This tool can do two things by reading a save file:\n");
+  about_string.push_str("1. Change the names of all playable characters to their default names in other languages.\n");
+  about_string.push_str("2. Convert the save version by modifying the build date in the save file.\n\n");
+  about_string.push_str("Note: 1. This tool also supports some other languages' fan translation version.\n");
+  about_string.push_str("      2. If the build date in the save file does not match the build date the game ROM,\n");
+  about_string.push_str("         the game will force the player to start the game from the sanctum.");
+
   let matches = Command::new("Golden Sun Save Converter")
-    .version("v0.1.6")
+    .version("v0.1.7")
     .author("Hambaka")
-    .about("Read save data to change all party members' names to the default name in other language versions, \nand save data can be converted to aother language version by editing build date.")
+    .about(about_string)
     .allow_negative_numbers(true)
     .arg(
       arg!(
-        <INPUT_FILE> "GS1/GS2 save file"
+        <INPUT_FILE> "Golden Sun/Golden Sun: The Lost Age save file"
         )
         .value_parser(value_parser!(PathBuf))
         .required(true)
     )
     .arg(
       arg!(
-        -n --name <VALUE> "Change party members' names"
+        -n --name <VALUE> "The version of the names of playable characters"
       ).required(false)
     )
     .arg(
       arg!(
-        -b --build <VALUE> "Change save version (language version)"
+        -d --date <VALUE> "Build date version"
       ).required(false)
     )
     .group(
-      ArgGroup::new("content")
+      ArgGroup::new("args")
         .required(true)
-        .args(["name", "build"])
+        .args(["name", "date"])
         .multiple(true)
     )
     .arg(
@@ -186,8 +196,8 @@ fn main() {
   };
 
   let mut build_date_type_option: Option<BuildDateType> = None;
-  if let Some(build) = matches.get_one::<String>("build") {
-    build_date_type_option = match build.as_str() {
+  if let Some(build_date_type) = matches.get_one::<String>("date") {
+    build_date_type_option = match build_date_type.as_str() {
       // nc -> Chinese fan translation by 2023 Team (new, TBS only, based on Japanese version)
       // k -> Korean fan translation by pjs0493 (TBS & TLA, based on Japanese version).
       "j" | "nc" | "k" => Some(BuildDateType::Japanese),

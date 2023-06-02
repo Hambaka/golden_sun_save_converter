@@ -9,17 +9,24 @@
 ![Platform](https://img.shields.io/badge/platform%20(x86--64)-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)
 [![Version](https://img.shields.io/github/v/release/Hambaka/golden_sun_save_converter?label=version&style=flat-square)](https://github.com/Hambaka/golden_sun_save_converter/releases/latest)
 
-Change all party members' names to the default name in other language versions, and save data can be converted to aother language version by editing build date.
+A simple tool for two GBA games, Golden Sun and Golden Sun: The Lost Age.  
+This tool can do two things by reading a save file:  
+- Change the names of all playable characters to their default names in other languages.  
+- Convert the save version by modifying the build date in the save file.  
 
-## Usage (TODO)
-```shell
-Usage: golden_sun_save_converter [OPTIONS] <--name <VALUE>|--build <VALUE>> <INPUT_FILE>
+Note:  
+- This tool also supports some other languages' fan translation version.  
+- If the build date in the save file does not match the build date the game ROM, the game will force the player to start the game from the sanctum.  
+
+## Usage
+```
+Usage: golden_sun_save_converter.exe [OPTIONS] <--name <VALUE>|--date <VALUE>> <INPUT_FILE>
 
 Arguments:
-  <INPUT_FILE>  GS1/GS2 save file
+  <INPUT_FILE>  Golden Sun/Golden Sun: The Lost Age save file
 
 Options:
-  -n, --name <VALUE>          Change party members' names
-  -b, --build <VALUE>         Change save version (language version)
+  -n, --name <VALUE>          The version of the names of playable characters
+  -d, --date <VALUE>          Build date version
   -o, --output <OUTPUT_FILE>  Output save file location
 ```
