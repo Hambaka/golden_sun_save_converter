@@ -136,35 +136,16 @@ fn main() {
     .author("Hambaka")
     .about(about_string)
     .allow_negative_numbers(true)
-    .arg(
-      arg!(
-        <INPUT_FILE> "Golden Sun/Golden Sun: The Lost Age save file"
-        )
-        .value_parser(value_parser!(PathBuf))
-        .required(true)
-    )
-    .arg(
-      arg!(
-        -n --name <VALUE> "The version of the names of playable characters"
-      ).required(false)
-    )
-    .arg(
-      arg!(
-        -d --date <VALUE> "Build date version"
-      ).required(false)
-    )
-    .group(
-      ArgGroup::new("args")
-        .required(true)
-        .args(["name", "date"])
-        .multiple(true)
-    )
-    .arg(
-      arg!(
-        -o --output <OUTPUT_FILE> "Output save file location"
-      )
-        .value_parser(value_parser!(PathBuf))
-        .required(false)
+    .args(&[
+      arg!(<INPUT_FILE> "Golden Sun/Golden Sun: The Lost Age save file").value_parser(value_parser!(PathBuf)).required(true),
+      arg!(-n --name <VALUE> "The version of the names of playable characters"),
+      arg!(-d --date <VALUE> "Build date version"),
+      arg!(-o --output <OUTPUT_FILE> "Output save file location").value_parser(value_parser!(PathBuf))
+    ])
+    .group(ArgGroup::new("args")
+      .args(["name", "date"])
+      .required(true)
+      .multiple(true)
     )
     .get_matches();
 
