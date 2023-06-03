@@ -61,6 +61,13 @@ const PC_NAME: [[[u8; 7]; 8]; 8] = [
   [[0x25, 0x23, 0x26, 0x23, 0x00, 0x00, 0x00], [0x27, 0x23, 0x28, 0x23, 0x29, 0x23, 0x00], [0x2A, 0x23, 0x2B, 0x23, 0x00, 0x00, 0x00], [0x2C, 0x23, 0x2D, 0x23, 0x2E, 0x23, 0x00], [0x2F, 0x23, 0x30, 0x23, 0x31, 0x23, 0x00], [0x2F, 0x23, 0x32, 0x23, 0x33, 0x23, 0x00], [0x30, 0x23, 0x34, 0x23, 0x00, 0x00, 0x00], [0x35, 0x23, 0x36, 0x23, 0x29, 0x23, 0x00]]
 ];
 
+/// The 8th byte in save header is the slot number, it only show 3 active save data in game.
+const HEADER_SAVE_SLOT_NUMBER_LOCATION_INDEX: usize = 0x07;
+
+/// The values for 3 'active' save data are: 0x00, 0x01 and 0x02.
+/// For more information, please see the comment for `convert_save`.
+const MAX_VALID_SLOT_NUMBER: u8 = 0x02;
+
 /// For TBS, the size of each save slot is 4KB.
 /// For TLA, the size of each save slot is 12KB.
 const SAVE_SLOT_SIZE: [usize; 2] = [0x1000, 0x3000];
@@ -276,7 +283,7 @@ fn main() {
 
 fn get_game_type_with_loop_start_index_option(raw_save_file: &[u8]) -> (Option<GameType>, Option<usize>) {
   for i in 0..MAX_LOOP_COUNT[0] {
-    let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + HEADER_CAMELOT_ASCII_STRING.len())]) else { continue; };
+    let Ok(header_string) = std::str::from_utf8(&raw_save_file[(i * SAVE_SLOT_SIZE[0])..(i * SAVE_SLOT_SIZE[0] + HEADER_SAVE_SLOT_NUMBER_LOCATION_INDEX)]) else { continue; };
     if !header_string.eq(HEADER_CAMELOT_ASCII_STRING) {
       continue;
     }
@@ -331,14 +338,14 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
   };
 
   for i in loop_start_index..MAX_LOOP_COUNT[game_type_index] {
-    /* Some backup save data does not store names and build date, so I think maybe I should skip this kind of save data...
-       But seems we only need to get save's build date to see if the build date is valid.
-       If it's valid, that means the save stores both names and build date, even the game won't show this save in game's save select screen. */
-    if i > loop_start_index {
-      let build_date_from_raw_save = u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][1]]]);
-      if !GS_BUILD_DATE[game_type_index].contains(&build_date_from_raw_save) {
-        continue;
-      }
+    // Skip "invalid" save data.
+    if raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + HEADER_SAVE_SLOT_NUMBER_LOCATION_INDEX] > MAX_VALID_SLOT_NUMBER {
+      continue;
+    }
+    // Skip "invalid" save data.
+    let build_date_from_raw_save = u16::from_le_bytes([raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][0]], raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + BUILD_DATE_LOCATION_INDEX[game_type_index][0][1]]]);
+    if !GS_BUILD_DATE[game_type_index].contains(&build_date_from_raw_save) {
+      continue;
     }
 
     if let Some(pc_name_type) = pc_name_type_option {
