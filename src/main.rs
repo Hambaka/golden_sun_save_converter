@@ -139,7 +139,7 @@ fn main() {
   about_string.push_str("         the game will force the player to start the game from the sanctum.");
 
   let matches = Command::new("Golden Sun Save Converter")
-    .version("v0.1.7")
+    .version("v0.1.8")
     .author("Hambaka")
     .about(about_string)
     .allow_negative_numbers(true)
@@ -172,10 +172,10 @@ fn main() {
       // Invalid value
       _ => {
         eprintln!("Please input a valid name type!");
-        eprintln!("Available values: j, e, g, s, f, i, oc, nc");
-        eprintln!(" j: Japanese, e: English, g: Germany");
-        eprintln!(" f: French,   i: Italy,   s: Spanish");
-        eprintln!("oc: Chinese (TLA only),  nc: Chinese (TBS only)");
+        eprintln!("Available values: j, e, g, s, f, i, oc, nc, p, k");
+        eprintln!(" j: Japanese, e: English, g: Germany,");
+        eprintln!(" s: Spanish,  f: French,  i: Italy,");
+        eprintln!("oc: Chinese (TLA only),  nc: Chinese (TBS only),");
         eprintln!(" p: English,  k: Japanese");
         eprintln!("Example: -n e");
         return;
@@ -199,12 +199,12 @@ fn main() {
       // Invalid value
       _ => {
         eprintln!("Please input a valid build date type!");
-        eprintln!("Available values: j, e, g, s, f, i, oc, nc");
+        eprintln!("Available values: j, u, e, g, s, f, i, oc, nc, p, k");
         eprintln!("j:  Japan,   u: USA/Europe, e: USA/Europe");
         eprintln!("g:  Germany, s: Spanish,    f: France,    i: Italy");
         eprintln!("oc: USA/Europe (TLA only), nc: Japan (TBS only)");
         eprintln!("p:  USA/Europe,             k: Japan");
-        eprintln!("Example: -b e");
+        eprintln!("Example: -d e");
         return;
       }
     };
