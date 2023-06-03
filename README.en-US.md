@@ -20,7 +20,7 @@ Note:
 
 ## Usage
 ```
-Usage: golden_sun_save_converter.exe [OPTIONS] <--name <VALUE>|--date <VALUE>> <INPUT_FILE>
+Usage: golden_sun_save_converter [OPTIONS] <--name <VALUE>|--date <VALUE>> <INPUT_FILE>
 
 Arguments:
   <INPUT_FILE>  Golden Sun/Golden Sun: The Lost Age save file
