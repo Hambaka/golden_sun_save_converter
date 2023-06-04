@@ -1,7 +1,3 @@
-# README (TODO)
-[![zh-Hans](https://img.shields.io/badge/-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-black.svg?style=for-the-badge&logo=googletranslate&logoColor=yellow)](https://github.com/Hambaka/golden_sun_save_converter/blob/main/README.md)
-[![en-US](https://img.shields.io/badge/-English-black.svg?style=for-the-badge&logo=googletranslate&logoColor=yellow)](https://github.com/Hambaka/golden_sun_save_converter/blob/main/README.en-US.md)
----
 # golden_sun_save_converter
 
 ![Rust](https://img.shields.io/badge/language-Rust-DEA584.svg?style=flat-square&logo=rust)
@@ -11,15 +7,23 @@
 
 A simple tool for two GBA games, Golden Sun and Golden Sun: The Lost Age.  
 This tool can do two things by reading a save file:  
+
 - Change the names of all playable characters to their default names in other languages.  
 - Convert the save version by modifying the build date in the save file.  
 
 Note:  
+
 - This tool also supports some other languages' fan translation version.  
 - If the build date in the save file does not match the build date the game ROM, the game will force the player to start the game from the sanctum.  
 
+## README  
+
+[![zh-Hans](https://img.shields.io/badge/-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-black.svg?style=for-the-badge&logo=googletranslate&logoColor=gold)](https://github.com/Hambaka/golden_sun_save_converter/blob/main/README.md)
+[![en-US](https://img.shields.io/badge/-English%20(TODO)-black.svg?style=for-the-badge&logo=googletranslate&logoColor=gold)](https://github.com/Hambaka/golden_sun_save_converter/blob/main/README.en-US.md)
+
 ## Usage
-```
+
+```text
 Usage: golden_sun_save_converter [OPTIONS] <--name <VALUE>|--date <VALUE>> <INPUT_FILE>
 
 Arguments:
