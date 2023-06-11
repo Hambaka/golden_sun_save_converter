@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::string::String;
-use clap::{Command, arg, ArgGroup, value_parser};
+use clap::{Command, arg, ArgGroup, value_parser, ValueEnum, crate_version};
+use clap::builder::PossibleValue;
 
 /// 7 bytes for the ASCII string "CAMELOT" in each save's header.
 const HEADER_CAMELOT_ASCII_STRING: &str = "CAMELOT";
@@ -113,40 +114,101 @@ enum NameType {
   Spanish,
   French,
   Italian,
+  // TLA only
   ChineseFanTranslationMobileTeam,
+  // TBS only
   ChineseFanTranslation2023Team,
+  // Same as "English"
+  PolishFanTranslation,
+  // Same as "Japanese"
+  KoreanFanTranslation,
+}
+
+impl ValueEnum for NameType {
+  fn value_variants<'a>() -> &'a [Self] {
+    &[Self::Japanese, Self::English, Self::German, Self::Spanish, Self::French, Self::Italian,
+      Self::ChineseFanTranslationMobileTeam, Self::ChineseFanTranslation2023Team, Self::PolishFanTranslation, Self::KoreanFanTranslation]
+  }
+
+  fn to_possible_value(&self) -> Option<PossibleValue> {
+    Some(match self {
+      Self::Japanese => PossibleValue::new("j").help("Japanese"),
+      Self::English => PossibleValue::new("e").help("English"),
+      Self::German => PossibleValue::new("g").help("German"),
+      Self::Spanish => PossibleValue::new("s").help("Spanish"),
+      Self::French => PossibleValue::new("f").help("French"),
+      Self::Italian => PossibleValue::new("i").help("Italian"),
+      Self::ChineseFanTranslationMobileTeam => PossibleValue::new("oc").help("Chinese fan translation by Mobile Team, TLA only"),
+      Self::ChineseFanTranslation2023Team => PossibleValue::new("nc").help("Chinese fan translation by 2023 Team, TBS only"),
+      Self::PolishFanTranslation => PossibleValue::new("p").help("Polish fan translation, TBS only, same as \"English\""),
+      Self::KoreanFanTranslation => PossibleValue::new("k").help("Korean fan translation, same as \"Japanese\""),
+    })
+  }
 }
 
 #[derive(Clone, Copy)]
 enum BuildDateType {
-  Japanese,
-  English,
-  German,
-  Spanish,
-  French,
-  Italian,
+  Japan,
+  // USA/Europe
+  USA,
+  // USA/Europe
+  Europe,
+  Germany,
+  Spain,
+  France,
+  Italy,
+  // Same as "USA/Europe"
+  ChineseFanTranslationMobileTeamVersion,
+  // Same as "Japan"
+  ChineseFanTranslation2023TeamVersion,
+  // Same as "USA/Europe"
+  PolishFanTranslationVersion,
+  // Same as "Japan"
+  KoreanFanTranslationVersion,
+}
+
+impl ValueEnum for BuildDateType {
+  fn value_variants<'a>() -> &'a [Self] {
+    &[Self::Japan, Self::USA, Self::Europe, Self::Germany, Self::Spain, Self::France, Self::Italy,
+      Self::ChineseFanTranslationMobileTeamVersion, Self::ChineseFanTranslation2023TeamVersion, Self::PolishFanTranslationVersion, Self::KoreanFanTranslationVersion]
+  }
+
+  fn to_possible_value(&self) -> Option<PossibleValue> {
+    Some(match self {
+      Self::Japan => PossibleValue::new("j").help("Japan"),
+      Self::USA => PossibleValue::new("u").help("USA, Europe"),
+      Self::Europe => PossibleValue::new("e").help("USA, Europe"),
+      Self::Germany => PossibleValue::new("g").help("Germany"),
+      Self::Spain => PossibleValue::new("s").help("Spain"),
+      Self::France => PossibleValue::new("f").help("France"),
+      Self::Italy => PossibleValue::new("i").help("Italy"),
+      Self::ChineseFanTranslationMobileTeamVersion => PossibleValue::new("oc").help("Chinese fan translation by Mobile Team, TLA only, same as \"USA, Europe\""),
+      Self::ChineseFanTranslation2023TeamVersion => PossibleValue::new("nc").help("Chinese fan translation by 2023 Team, TBS only, same as \"Japan\""),
+      Self::PolishFanTranslationVersion => PossibleValue::new("p").help("Polish fan translation, TBS only, same as \"USA, Europe\""),
+      Self::KoreanFanTranslationVersion => PossibleValue::new("k").help("Korean fan translation, same as \"Japan\""),
+    })
+  }
 }
 
 fn main() {
-  // "long_about" looks weird?
-  let mut about_string = String::new();
-  about_string.push_str("A simple tool for two GBA games, Golden Sun and Golden Sun: The Lost Age.\n\n");
-  about_string.push_str("This tool can do two things by reading a save file:\n");
-  about_string.push_str("1. Change the names of all playable characters to their default names in other languages.\n");
-  about_string.push_str("2. Convert the save version by modifying the build date in the save file.\n\n");
-  about_string.push_str("Note: 1. This tool also supports some other languages' fan translation version.\n");
-  about_string.push_str("      2. If the build date in the save file does not match the build date the game ROM,\n");
-  about_string.push_str("         the game will force the player to start the game from the sanctum.");
-
   let matches = Command::new("Golden Sun Save Converter")
-    .version("v0.1.8")
+    .version(crate_version!())
     .author("Hambaka")
-    .about(about_string)
-    .allow_negative_numbers(true)
+    .about(
+      "A simple tool for two GBA games, Golden Sun and Golden Sun: The Lost Age.\n\n\
+      This tool can do two things by reading a save file:\n\
+      1. Change the names of all playable characters to their default names in other languages.\n\
+      2. Convert the save version by modifying the build date in the save file.\n\n\
+      Note:\n\
+      1. This tool also supports some other languages' fan translation version.\n\
+      2. If the build date in the save file does not match the build date the game ROM,\n\
+         the game will force the player to start the game from the sanctum.")
     .args(&[
       arg!(<INPUT_FILE> "Golden Sun/Golden Sun: The Lost Age save file").value_parser(value_parser!(PathBuf)).required(true),
-      arg!(-n --name <VALUE> "The version of the names of playable characters"),
-      arg!(-d --date <VALUE> "Build date version"),
+      // value_parser(clap::builder::PossibleValuesParser::new(["j", "e", "g", "s", "f", "i", "oc", "nc", "p", "k"]))
+      arg!(-n --name <VALUE> "The version of the names of playable characters").value_parser(clap::builder::EnumValueParser::<NameType>::new()),
+      // value_parser(clap::builder::PossibleValuesParser::new(["j", "u", "e", "g", "s", "f", "i", "oc", "nc", "p", "k"]))
+      arg!(-d --date <VALUE> "Build date version").value_parser(clap::builder::EnumValueParser::<BuildDateType>::new()),
       arg!(-o --output <OUTPUT_FILE> "Output save file location").value_parser(value_parser!(PathBuf))
     ])
     .group(ArgGroup::new("args")
@@ -157,57 +219,13 @@ fn main() {
     .get_matches();
 
   let mut pc_name_type_option: Option<NameType> = None;
-  if let Some(name) = matches.get_one::<String>("name") {
-    pc_name_type_option = match name.as_str() {
-      "j" | "k" => Some(NameType::Japanese),
-      "e" | "p" => Some(NameType::English),
-      "g" => Some(NameType::German),
-      "s" => Some(NameType::Spanish),
-      "f" => Some(NameType::French),
-      "i" => Some(NameType::Italian),
-      // oc -> Chinese fan translation (old, GS2 only)
-      "oc" => Some(NameType::ChineseFanTranslationMobileTeam),
-      // nc -> Chinese fan translation (new, GS1 only)
-      "nc" => Some(NameType::ChineseFanTranslation2023Team),
-      // Invalid value
-      _ => {
-        eprintln!("Please input a valid name type!");
-        eprintln!("Available values: j, e, g, s, f, i, oc, nc, p, k");
-        eprintln!(" j: Japanese, e: English, g: Germany,");
-        eprintln!(" s: Spanish,  f: French,  i: Italy,");
-        eprintln!("oc: Chinese (TLA only),  nc: Chinese (TBS only),");
-        eprintln!(" p: English,  k: Japanese");
-        eprintln!("Example: -n e");
-        return;
-      }
-    }
+  if let Some(name_type) = matches.get_one("name") {
+    pc_name_type_option = Some(*name_type);
   };
 
   let mut build_date_type_option: Option<BuildDateType> = None;
-  if let Some(build_date_type) = matches.get_one::<String>("date") {
-    build_date_type_option = match build_date_type.as_str() {
-      // nc -> Chinese fan translation by 2023 Team (new, TBS only, based on Japanese version)
-      // k -> Korean fan translation by pjs0493 (TBS & TLA, based on Japanese version).
-      "j" | "nc" | "k" => Some(BuildDateType::Japanese),
-      // oc -> Chinese fan translation by Mobile/Soma Team (old, TLA only, based on English version)
-      // p -> Polish fan translation by Rykuzushi (TBS only, based on English version)
-      "u" | "e" | "oc" | "p" => Some(BuildDateType::English),
-      "g" => Some(BuildDateType::German),
-      "s" => Some(BuildDateType::Spanish),
-      "f" => Some(BuildDateType::French),
-      "i" => Some(BuildDateType::Italian),
-      // Invalid value
-      _ => {
-        eprintln!("Please input a valid build date type!");
-        eprintln!("Available values: j, u, e, g, s, f, i, oc, nc, p, k");
-        eprintln!("j:  Japan,   u: USA/Europe, e: USA/Europe");
-        eprintln!("g:  Germany, s: Spanish,    f: France,    i: Italy");
-        eprintln!("oc: USA/Europe (TLA only), nc: Japan (TBS only)");
-        eprintln!("p:  USA/Europe,             k: Japan");
-        eprintln!("Example: -d e");
-        return;
-      }
-    };
+  if let Some(build_date_type) = matches.get_one("date") {
+    build_date_type_option = Some(*build_date_type);
   }
 
   // Read save file.
@@ -236,13 +254,18 @@ fn main() {
   }
   let loop_start_index = loop_start_index_option.unwrap();
 
-  // Only for Chinese fan translations.
+  // Simple validation for name type and game type combination.
   if let Some(name_type) = pc_name_type_option {
-    if let Some(game_type) = game_type_option {
-      if (matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TheBrokenSeal)) || (matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TheLostAge)) {
-        eprintln!("This combination is not supported!");
-        return;
-      }
+    let game_type = game_type_option.unwrap();
+    if matches!(name_type, NameType::ChineseFanTranslationMobileTeam) && matches!(game_type, GameType::TheBrokenSeal) {
+      eprintln!("All playable characters' names in Chinese fan translation by Mobile Team are TLA only!");
+      return;
+    } else if matches!(name_type, NameType::ChineseFanTranslation2023Team) && matches!(game_type, GameType::TheLostAge) {
+      eprintln!("All playable characters' names in Chinese fan translation by 2023 Team are TBS only!");
+      return;
+    } else if matches!(name_type, NameType::PolishFanTranslation) && matches!(game_type, GameType::TheLostAge) {
+      println!("Although all playable characters' names in Polish fan translation are TBS only,");
+      println!("but since these names are the same as those in the English version, so there will be no problem.");
     }
   }
 
@@ -349,9 +372,9 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
     }
 
     if let Some(pc_name_type) = pc_name_type_option {
-      let pc_name_type_index: usize = match pc_name_type {
-        NameType::Japanese => 0,
-        NameType::English => 1,
+      let pc_name_type_index = match pc_name_type {
+        NameType::Japanese | NameType::KoreanFanTranslation => 0,
+        NameType::English | NameType::PolishFanTranslation => 1,
         NameType::German => 2,
         NameType::Spanish => 3,
         NameType::French => 4,
@@ -417,12 +440,13 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
        Every language version has a different build date. */
     if let Some(build_date_type) = build_date_type_option {
       let build_date_type_index = match build_date_type {
-        BuildDateType::Japanese => 0,
-        BuildDateType::English => 1,
-        BuildDateType::German => 2,
-        BuildDateType::Spanish => 3,
-        BuildDateType::French => 4,
-        BuildDateType::Italian => 5,
+        BuildDateType::Japan | BuildDateType::ChineseFanTranslation2023TeamVersion | BuildDateType::KoreanFanTranslationVersion => 0,
+        BuildDateType::USA | BuildDateType::ChineseFanTranslationMobileTeamVersion | BuildDateType::PolishFanTranslationVersion => 1,
+        BuildDateType::Europe => 1,
+        BuildDateType::Germany => 2,
+        BuildDateType::Spain => 3,
+        BuildDateType::France => 4,
+        BuildDateType::Italy => 5,
       };
 
       let build_date = GS_BUILD_DATE[game_type_index][build_date_type_index].to_le_bytes();
