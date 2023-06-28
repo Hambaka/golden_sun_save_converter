@@ -269,8 +269,8 @@ fn main() {
     }
   }
 
-  // Get output save data file.
-  let output_save = convert_save(raw_save_file, game_type_option, loop_start_index, pc_name_type_option, build_date_type_option);
+  // Convert save data.
+  convert_save(&mut raw_save_file, game_type_option, loop_start_index, pc_name_type_option, build_date_type_option);
   // Start to create and write output save file.
   let output_path;
   let mut output_file;
@@ -301,7 +301,7 @@ fn main() {
     output_path = PathBuf::from(parent).join(file_name_str);
   }
   output_file = File::create(output_path.clone()).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
-  output_file.write_all(&output_save).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
+  output_file.write_all(&raw_save_file).unwrap_or_else(|_| panic!("Failed to create \"{}\"!", output_path.to_str().unwrap()));
 }
 
 fn get_game_type_with_loop_start_index_option(raw_save_file: &[u8]) -> (Option<GameType>, Option<usize>) {
@@ -354,7 +354,7 @@ fn get_game_type_with_loop_start_index_option(raw_save_file: &[u8]) -> (Option<G
    Some sections have slot numbers of 3, 4, or 5,
    those sections are the second half of slots 0, 1, and 2 respectively.
    But seems the second half of the save doesn't store the data for generating password. */
-fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, loop_start_index: usize, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) -> Vec<u8> {
+fn convert_save(raw_save_file: &mut [u8], game_type_option: Option<GameType>, loop_start_index: usize, pc_name_type_option: Option<NameType>, build_date_type_option: Option<BuildDateType>) {
   let game_type_index = match game_type_option.unwrap() {
     GameType::TheBrokenSeal => 0,
     GameType::TheLostAge => 1,
@@ -441,8 +441,7 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
     if let Some(build_date_type) = build_date_type_option {
       let build_date_type_index = match build_date_type {
         BuildDateType::Japan | BuildDateType::ChineseFanTranslation2023TeamVersion | BuildDateType::KoreanFanTranslationVersion => 0,
-        BuildDateType::USA | BuildDateType::ChineseFanTranslationMobileTeamVersion | BuildDateType::PolishFanTranslationVersion => 1,
-        BuildDateType::Europe => 1,
+        BuildDateType::USA | BuildDateType::Europe | BuildDateType::ChineseFanTranslationMobileTeamVersion | BuildDateType::PolishFanTranslationVersion => 1,
         BuildDateType::Germany => 2,
         BuildDateType::Spain => 3,
         BuildDateType::France => 4,
@@ -470,6 +469,4 @@ fn convert_save(mut raw_save_file: Vec<u8>, game_type_option: Option<GameType>, 
       raw_save_file[i * SAVE_SLOT_SIZE[game_type_index] + HEADER_CHECKSUM_LOCATION_INDEX[j]] = checksum_bytes[j];
     }
   }
-
-  raw_save_file
 }
