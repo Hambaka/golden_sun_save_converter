@@ -27,10 +27,41 @@ Note:
 Usage: golden_sun_save_converter [OPTIONS] <--name <VALUE>|--date <VALUE>> <INPUT_FILE>
 
 Arguments:
-  <INPUT_FILE>  Golden Sun/Golden Sun: The Lost Age save file
+  <INPUT_FILE>
+          Golden Sun/Golden Sun: The Lost Age save file
 
 Options:
-  -n, --name <VALUE>          The version of the names of playable characters
-  -d, --date <VALUE>          Build date version
-  -o, --output <OUTPUT_FILE>  Output save file location
+  -n, --name <VALUE>
+          The version of the names of playable characters
+
+          Possible values:
+          - j:  Japanese
+          - e:  English
+          - g:  German
+          - s:  Spanish
+          - f:  French
+          - i:  Italian
+          - oc: Chinese fan translation by Mobile Team, TLA only
+          - nc: Chinese fan translation by 2023 Team, TBS only
+          - p:  Polish fan translation, TBS only, same as "English"
+          - k:  Korean fan translation, same as "Japanese"
+
+  -d, --date <VALUE>
+          Build date version
+
+          Possible values:
+          - j:  Japan
+          - u:  USA, Europe
+          - e:  USA, Europe
+          - g:  Germany
+          - s:  Spain
+          - f:  France
+          - i:  Italy
+          - oc: Chinese fan translation by Mobile Team, TLA only, same as "USA, Europe"
+          - nc: Chinese fan translation by 2023 Team, TBS only, same as "Japan"
+          - p:  Polish fan translation, TBS only, same as "USA, Europe"
+          - k:  Korean fan translation, same as "Japan"
+
+  -o, --output <OUTPUT_FILE>
+          Output save file location
 ```
